@@ -7,7 +7,9 @@ columns = ['nodeIndex',\
            'snapshotNumber',\
            'particleNumber',\
            'hostIndex',\
-           'descendantHost',]
+           'descendantHost',\
+           'isMainProgenitor',\
+					]
 
 def mock(data_frame=False):
 	d = np.array([[0,1,2,3,4,5,6,7,8,9], # nodeIndex
@@ -41,6 +43,8 @@ def data(filename=filename, data_frame=False):
 		index of a host halo of descendant of a halo (or subhalo); this field
 		eliminates "multiple descendance" problem, always creating a merger history
 		which works for main progenitors only
+	isMainProgenitor:
+		1 if it is
 	"""
 	f = h5py.File(filename, 'r')
 	t = f['/haloTrees']

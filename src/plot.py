@@ -30,15 +30,10 @@ def mah(d, h, visited_halo_links, m0, f):
 	"""
 	Recursive mass assembly history
 
-
-
 	d:
 		dataset; NumPy array with 6 columns, provided by ``read`` module
 	h:
 		halo; node of the tree progenitors of which are being queried
-	visited_halo_ids:
-		array of nodes whose histories have alreade been traversed; prevents
-		duplicate runs deep inside the tree
 	m0:
 		main progenitors' mass
 	f:
@@ -49,17 +44,19 @@ def mah(d, h, visited_halo_links, m0, f):
 		raise Error("FATAL: not a host halo!")
 		sys.exit(1)
 
-	visited_halo_links.append(h[0])
 
 	# node: "id (mass@snapshot)"
 	m = h[3]
-	f.write("\t%d [label=\"%d (%d@%d)\", style=filled, fillcolor=%s];\n"\
-		%(h[0], h[0], m, h[2], 'green' if m > 0.01*m0 else 'red'))
+	f.write("\t%d [label=\"%d (%d:%d@%d)\", style=filled, fillcolor=%s];\n"\
+		%(h[0], h[0], h[6], m, h[2], 'green' if m > 0.01*m0 else 'red'))
 
 	# query for all progenitors' hosts' ids, and keep unique ones
-	for prog_host_id in np.unique(d[np.where(d[:,1] == h[0])][:,4]):
-		f.write("\t%d -> %d;\n"%(prog_host_id, h[0]))
-		if prog_host_id not in visited_halo_links:
+	prog_host_ids = np.unique(d[np.where(d[:,1] == h[0])][:,4])
+	for prog_host_id in prog_host_ids:
+		if ([prog_host_id, h[0]] not in visited_halo_links and \
+			  d[np.where(d[:,0] == prog_host_id)][0][6] == 1):
+			visited_halo_links.append([prog_host_id, h[0]])
+			f.write("\t%d -> %d;\n"%(prog_host_id, h[0]))
 			mah(d, d[np.where(d[:,0] == prog_host_id)][0], visited_halo_links, m0, f)
 
 def main():
