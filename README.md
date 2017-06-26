@@ -35,11 +35,16 @@ Merger Tree visualisation
 	belongs two separate trees (see halo `36048400001731`, which belongs both to
 	`37048400000752` and `37048400001615` histories)
 
-**de-duplicating**
+**de-duplicating *nodes***
 : implemented by only recursing if progenitors' id is not in the list of
 	already visited nodes, prevents multiple traversals;	as of now, it also
 	causes *skipping "double progenitor" histories*, and should be investigated
 	further
+
+**de-duplicating *links***
+: like above, but replace `element not in visited_halo_ids` with `link not in
+  visited_halo_links`, and save the links instead of ids (**does not work as of
+	now**)
 
 ### Tree diagram
 

@@ -19,6 +19,29 @@ def mock(data_frame=False):
 	return d
 
 def data(filename=filename, data_frame=False):
+	"""
+	Function reading DHalo data and returning NumPy object or Pandas DataFrame.
+
+	Halo table format:
+	
+	nodeIndex:
+		index of each halo or subhalo, unique across the entire catalogue
+	descendantIndex:
+		index of a descendanta halo (if multiple haloes have the same descendatant
+		index, they all are the progenitors)
+	snapshotNumber:
+		snapshot at which halo was identified
+	particleNumber:
+		number of particles in a halo; might differ from masses identified by other
+		methods
+	hostIndex:
+		index of a host halo; for subhaloes, this points to a parent halo; for main
+		haloes, this points to themselves
+	descendantHost:
+		index of a host halo of descendant of a halo (or subhalo); this field
+		eliminates "multiple descendance" problem, always creating a merger history
+		which works for main progenitors only
+	"""
 	f = h5py.File(filename, 'r')
 	t = f['/haloTrees']
 	if data_frame:

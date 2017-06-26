@@ -26,7 +26,7 @@ def full_tree(d, f):
 				rank_label += str(node)+"; "
 			f.write("%s};\n"%rank_label)
 
-def mah(d, h, visited_halo_ids, m0, f):
+def mah(d, h, visited_halo_links, m0, f):
 	"""
 	Recursive mass assembly history
 
@@ -49,7 +49,7 @@ def mah(d, h, visited_halo_ids, m0, f):
 		raise Error("FATAL: not a host halo!")
 		sys.exit(1)
 
-	visited_halo_ids.append(h[0])
+	visited_halo_links.append(h[0])
 
 	# node: "id (mass@snapshot)"
 	m = h[3]
@@ -59,8 +59,8 @@ def mah(d, h, visited_halo_ids, m0, f):
 	# query for all progenitors' hosts' ids, and keep unique ones
 	for prog_host_id in np.unique(d[np.where(d[:,1] == h[0])][:,4]):
 		f.write("\t%d -> %d;\n"%(prog_host_id, h[0]))
-		if prog_host_id not in visited_haloes:
-			mah(d, d[np.where(d[:,0] == prog_host_id)][0], visited_halo_ids, m0, f)
+		if prog_host_id not in visited_halo_links:
+			mah(d, d[np.where(d[:,0] == prog_host_id)][0], visited_halo_links, m0, f)
 
 def main():
 
