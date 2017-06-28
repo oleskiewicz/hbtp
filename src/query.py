@@ -1,34 +1,107 @@
 #!/usr/bin/env python
-import sys
-import h5py, numpy as np, pandas as pd
+import sys, numpy as np
+import read
+from read import ID, DESC, SNAP, MASS, HOST, DESC_HOST, MAIN_PROG
 
-# # REAL DATA - PANDAS
-# d = pd.DataFrame({'snapshotNumber': np.array(h['snapshotNumber'].value),\
-#									'descendantSnapshot': np.array(h['descendantSnapshot'].value),\
-#									'nodeIndex': np.array(h['nodeIndex'].value),\
-#									'particleNumber': np.array(h['particleNumber'].value),\
-#									'descendantIndex': np.array(h['descendantIndex'].value)})
-# d.index = d.nodeIndex
+def halo(h, d):
+	"""
+	Find halo given an ID.  Built-in fallback, so that when given halo it returns it.
+	"""
+	if type(h) == int:
+		h = 0 if h is -1 else h
+		h = d[np.where(d[:,ID] == h)][0]
+	elif type(h) == np.ndarray:
+		pass
+	else:
+		raise TypeError("Halo must be either ID or a NumPy array")
+	return h
 
-# # MOCK DATA - NUMPY
-# d = np.array([[0,1,2,3,4,5,6,7,8,9],		 # nodeIndex
-#				[-1,0,1,1,3,3,-1,6,7,-1],	 # descendantIndex
-#				[4,3,2,2,1,1,4,3,2,2],		 # snapshotNumber
-#				[10,8,3,5,2,3,4,4,4,2]]).T	 # particleNumber
+def display(h, d, level=0, list=False):
+	"""
+	Recursively print DHalo merger tree to a YAML file
+	"""
+	indent = "  "
+	if h != -1:
+		h = halo(h, d)
 
-# REAL DATA - NUMPY
-f = h5py.File("./data/tree_063.0.hdf5", 'r')
-t = f['/haloTrees']
-d = np.array([\
-	np.array(t['nodeIndex'].value),\
-	np.array(t['descendantIndex'].value),\
-	np.array(t['snapshotNumber'].value),\
-	np.array(t['particleNumber'].value),\
-	np.array(t['hostIndex'].value),\
-	np.array(t['descendantHost'].value),\
-]).T
-f.close()
+		if list:
+			sys.stdout.write("%s- "%(indent*(level-1)))
+		else:
+			sys.stdout.write("%s"%(indent*level))
+		print "id:   %d"%(h[ID])
 
-for id in [35048400001660, 36048400001731, 36048400001670, 37048400001615, 37048400000752]:
-	print d[np.where(d[:,0] == id)][0]
+		if (len(prog_host_ids) > 0):
+			print "%sprog:"%(indent*(level))
+			for prog_host_id in prog_host_ids:
+				display(prog_host_id, level+1, True)
+		else:
+			print "%sprog: none"%(indent*(level))
+
+		if (h[ID] == h[HOST]):
+			print "%shost: self"%(indent*(level))
+		else:
+			print "%shost:"%(indent*(level))
+			display(h[HOST], level+1)
+
+		# if (h[DESC] == -1):
+		# 	print "%sdesc: none"%(indent*(level))
+		# else:
+		# 	print "%sdesc:"%(indent*(level))
+		# 	display(h[DESC], level+1)
+
+	else:
+		print "%sid: none"%(indent*level)
+
+def hosts_of_progenitors(h, d):
+	"""
+	- find all haloes of which ``h`` is a descendant
+	- find host of these haloes
+	- keep unique ones
+	"""
+	h = halo(h, d)
+	return np.unique(d[np.where(d[:,DESC] == h[ID])][:,HOST])
+
+def host(h, d):
+	"""
+	- find host of ``h``
+	"""
+	h = halo(h, d)
+	return d[np.where(d[:,ID] == h[HOST])][0]
+
+def descendant(h, d):
+	"""
+	- find descendant of ``h``
+	"""
+	h = halo(h, d)
+	return d[np.where(d[:,ID] == h[DESC])][0]
+
+def subhaloes(h, d):
+	"""
+	- find haloes for which ``h`` is a host
+	"""
+	h = halo(h, d)
+	return d[np.where(d[:,HOST] == h[ID])]
+
+def progenitors(h, d, main=False):
+	"""
+	- find all haloes for which ``h`` is a descendant
+
+	.. note:: this will include subhaloes
+	"""
+	h = halo(h, d)
+	result = d[np.where(d[:,DESC] == h[ID])]
+	if main:
+		result = result[np.where(result[:,MAIN_PROG] == 1)][0]
+	return result
+
+def main():
+	d = read.retrieve()
+	for id in [48048400000000, 47048400000000,]:
+		print host(id, d)
+		print progenitors(id, d)
+		print progenitors(id, d, True)
+		print ""
+
+if __name__ == '__main__':
+	main()
 

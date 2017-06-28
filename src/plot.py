@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import sys, numpy as np
 import read
+from read import ID, DESC, SNAP, MASS, HOST, DESC_HOST, MAIN_PROG
 
 def full_tree(d, f):
 	"""
@@ -30,50 +31,42 @@ def mah(d, h, visited_halo_links, m0, f):
 	"""
 	Recursive mass assembly history
 
-	d:
-		dataset; NumPy array with 6 columns, provided by ``read`` module
-	h:
-		halo; node of the tree progenitors of which are being queried
-	m0:
-		main progenitors' mass
-	f:
-		NFW ``f`` parameter
+ 
+	:param d: dataset provided by ``read`` module
+	:type d: ``numpy.ndarray``
+	:param h: halo; node of the tree progenitors of which are being queried
+	:type h: table row
+	:param m0: main progenitors' mass
+	:type m0: ``int``
+	:param f: NFW :math:`f` parameter
+	:type f: ``float``
 	"""
 
-	if h[0] != h[4]:
+	if h[ID] != h[HOST]:
 		raise Error("FATAL: not a host halo!")
 		sys.exit(1)
 
 
-	# node: "id (mass@snapshot)"
-	m = h[3]
+	# node: "id (main_prog:mass@snapshot)"
+	m = h[MASS]
 	f.write("\t%d [label=\"%d (%d:%d@%d)\", style=filled, fillcolor=%s];\n"\
-		%(h[0], h[0], h[6], m, h[2], 'green' if m > 0.01*m0 else 'red'))
+		%(h[ID], h[ID], h[MAIN_PROG], m, h[2], 'green' if m > 0.01*m0 else 'red'))
 
 	# query for all progenitors' hosts' ids, and keep unique ones
-	prog_host_ids = np.unique(d[np.where(d[:,1] == h[0])][:,4])
+	prog_host_ids = np.unique(d[np.where(d[:,DESC] == h[ID])][:,HOST])
 	for prog_host_id in prog_host_ids:
-		if ([prog_host_id, h[0]] not in visited_halo_links and \
-			  d[np.where(d[:,0] == prog_host_id)][0][6] == 1):
-			visited_halo_links.append([prog_host_id, h[0]])
-			f.write("\t%d -> %d;\n"%(prog_host_id, h[0]))
-			mah(d, d[np.where(d[:,0] == prog_host_id)][0], visited_halo_links, m0, f)
+		if ([prog_host_id, h[ID]] not in visited_halo_links and \
+			  d[np.where(d[:,ID] == prog_host_id)][0][MAIN_PROG] == 1):
+			visited_halo_links.append([prog_host_id, h[ID]])
+			f.write("\t%d -> %d;\n"%(prog_host_id, h[ID]))
+			mah(d, d[np.where(d[:,ID] == prog_host_id)][0], visited_halo_links, m0, f)
 
 def main():
-
-	# # MOCK
-	# d = read.mock(data_frame=True)
-	# with open(sys.argv[1], 'w') as f:
-	# 	f.write("digraph { rankdir=BT\n")
-	# 	full_tree(d, f)
-	# 	f.write("}\n")
-
-	# REAL
-	d = read.data()
-	h = d[np.where(d[:,0] == int(sys.argv[1]))][0] # 
+	d = read.retrieve()
+	h = d[np.where(d[:,ID] == int(sys.argv[1]))][0] # 
 	with open(sys.argv[2], 'w') as f:
 		f.write("digraph { rankdir=BT\n")
-		mah(d, h, [], h[3], f)
+		mah(d, h, [], h[MASS], f)
 		f.write("}\n")
 
 if __name__ == '__main__':
