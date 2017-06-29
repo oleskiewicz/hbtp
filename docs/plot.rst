@@ -1,8 +1,8 @@
-Plotting module
+:mod:`src.plot`
 ===============
 
-This module converts halo merger trees from into a Graphviz plot.
-
 .. automodule:: src.plot
-	:members:
+  :members:
+  :undoc-members:
+  :show-inheritance:
 
