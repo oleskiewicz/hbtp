@@ -75,6 +75,13 @@ def descendant(h, d):
 	h = halo(h, d)
 	return d[np.where(d[:,ID] == h[DESC])][0]
 
+def descendant_host(h, d):
+	"""
+	- find descendant of ``h``
+	"""
+	h = halo(h, d)
+	return d[np.where(d[:,ID] == h[DESC])][0]
+
 def subhaloes(h, d):
 	"""
 	- find haloes for which ``h`` is a host
@@ -94,12 +101,22 @@ def progenitors(h, d, main=False):
 		result = result[np.where(result[:,MAIN_PROG] == 1)][0]
 	return result
 
+def progenitor_hosts(h, d):
+	"""
+	- find all haloes which host ``h`` progenitors
+	"""
+	h = halo(h, d)
+	result = np.unique(d[np.where(d[:,DESC_HOST] == h[ID])][:,HOST])
+	return result
+
 def main():
 	d = read.retrieve()
-	for id in [48048400000000, 47048400000000,]:
-		print host(id, d)
-		print progenitors(id, d)
-		print progenitors(id, d, True)
+	for id in [ 29048400000126, ]:
+		print "halo:     ", halo(id, d)
+		print "host:     ", host(id, d)
+		print "prog:     ", progenitors(id, d)
+		print "prog_main:", progenitors(id, d, True)
+		print "prog_host:", progenitor_hosts(id, d)
 		print ""
 
 if __name__ == '__main__':

@@ -13,4 +13,3 @@ docs:
 	$< $* $@
 
 .PHONY: plot docs
-.PRECIOUS: ./output/*dot
