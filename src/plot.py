@@ -28,7 +28,7 @@ def full_tree(d, f):
 			f.write("%s};\n"%rank_label)
 
 def mah(d, h, visited_halo_links, m0, f):
-	""" Recursive mass assembly history.
+	"""Recursive mass assembly history.
 
 	Arguments:
 		d (numpy.ndarray): dataset provided by :mod:`src.read` module
@@ -37,6 +37,7 @@ def mah(d, h, visited_halo_links, m0, f):
 		f (float): NFW :math:`f` parameter
 	"""
 
+	#TODO: implement recursive host (keep going until sureyl host)
 	# if h[ID] != h[HOST]:
 	# 	raise Error("FATAL: not a host halo!")
 	# 	sys.exit(1)
@@ -44,7 +45,7 @@ def mah(d, h, visited_halo_links, m0, f):
 	m = h[MASS]
 	f.write("\t%d [label=\"%d%s (%d:%d@%d)\", style=filled, fillcolor=%s];\n"\
 		%(h[ID], h[ID], "" if h[HOST] == h[ID] else " < %s"%h[HOST], h[MAIN_PROG], \
-		m, h[SNAP], 'green' if h[HOST] == h[ID] else 'red'))
+		m, h[SNAP], 'green' if h[DESC_HOST] == h[DESC] else 'red'))
 
 	progs = np.unique(d[np.where(d[:,DESC_HOST] == h[ID])][:,HOST])
 	#TODO: check if not empty
