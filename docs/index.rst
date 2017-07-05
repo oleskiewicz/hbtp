@@ -88,11 +88,7 @@ Tree diagram
 	#. for each halo select all pregenitors
 	#. run recursively for each progenitor
 
-TODO
-====
+.. todo::
 
-- fix build system
-	- ``cosma`` worker nodes do not have ``graphviz`` module loaded by default, unlike
-		the login nodes
-- implement tree traversal into Galform merger tree format
+  - implement tree traversal into Galform merger tree format
 

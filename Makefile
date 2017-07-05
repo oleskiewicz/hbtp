@@ -1,5 +1,4 @@
-# ID:=30048400000117
-ID:=48048400000000
+include config.mk
 
 plot: ./plots/mah_$(ID).pdf
 
@@ -10,6 +9,11 @@ docs:
 	dot -Tpdf -o $@ $<
 
 ./output/mah_%.dot: ./src/plot.py
-	$< $* $@
+	python $< $* $@
 
-.PHONY: plot docs
+clean:
+	rm -f ./output/*.dot
+
+.PHONY: plot clean docs
+.PRECIOUS: ./output/mah_%.dot
+
