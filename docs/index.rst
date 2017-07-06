@@ -90,5 +90,8 @@ Tree diagram
 
 .. todo::
 
-  - implement tree traversal into Galform merger tree format
+  - implement MAH construction from tree format
+    - crude way already in place
+    - generate Dot diagram
+    - make it fast
 
