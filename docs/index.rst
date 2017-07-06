@@ -6,7 +6,6 @@ Index
 =====
 
 .. toctree::
-	:maxdepth: 1
 	:glob:
 
 	**
@@ -89,11 +88,10 @@ Tree diagram
 	#. for each halo select all pregenitors
 	#. run recursively for each progenitor
 
-TODO
-====
+.. todo::
 
-- fix build system
-	- ``cosma`` worker nodes do not have ``graphviz`` module loaded by default, unlike
-		the login nodes
-- implement tree traversal into Galform merger tree format
+  - implement MAH construction from tree format
+    - crude way already in place
+    - generate Dot diagram
+    - make it fast
 

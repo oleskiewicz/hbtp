@@ -1,8 +1,8 @@
-Reading module
-==============
-
-This module reads data from merger trees to Python objects.
+:mod:`src.read`
+===============
 
 .. automodule:: src.read
-	:members:
+  :members:
+  :undoc-members:
+  :show-inheritance:
 

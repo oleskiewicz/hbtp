@@ -1,5 +1,4 @@
-# ID:=30048400000117
-ID:=48048400000000
+include config.mk
 
 plot: ./plots/mah_$(ID).pdf
 
@@ -9,8 +8,15 @@ docs:
 ./plots/mah_%.pdf: ./output/mah_%.dot
 	dot -Tpdf -o $@ $<
 
-./output/mah_%.dot: ./src/plot.py
-	$< $* $@
+./output/mah_%.dot: ./output/mah_%.yml
+	python ./src/traverse.py $< > $@
 
-.PHONY: plot docs
-.PRECIOUS: ./output/*dot
+./output/mah_%.yml: ./src/halo.py
+	python $< $* > $@
+
+clean:
+	rm -f ./output/*.dot
+
+.PHONY: plot clean docs
+.PRECIOUS: ./output/mah_%.dot ./output/mah_%.yml
+
