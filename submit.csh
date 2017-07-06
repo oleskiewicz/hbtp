@@ -7,8 +7,6 @@
 #BSUB -oo log/log_1.txt
 #BSUB -eo log/err_1.txt
 
-make
+# make
 
-# python ./src/plot.py $ID ./output/mah_$ID.dot
-# dot -Tpdf -o ./plots/mah_$ID.pdf ./output/mah_$ID.dot
-
+python ./src/traverse.py 48048400000000 > ./output/mah_48048400000000.dot

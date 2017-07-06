@@ -1,16 +1,11 @@
 #!/usr/bin/env python
-import h5py, numpy as np, pandas as pd
+import h5py
+import numpy as np
+import pandas as pd
 
-filename = "./data/tree_063.0.hdf5"
-columns = ['nodeIndex',\
-           'descendantIndex',\
-           'snapshotNumber',\
-           'particleNumber',\
-           'hostIndex',\
-           'descendantHost',\
-           'isMainProgenitor',\
-					]
-# column ids
+hdf5_file  = "./data/tree_063.0.hdf5"
+numpy_file = "./output/data.np"
+
 ID        = 0
 DESC      = 1
 SNAP      = 2
@@ -18,8 +13,25 @@ MASS      = 3
 HOST      = 4
 DESC_HOST = 5
 MAIN_PROG = 6
+columns = [\
+	'nodeIndex',\
+	'descendantIndex',\
+	'snapshotNumber',\
+	'particleNumber',\
+	'hostIndex',\
+	'descendantHost',\
+	'isMainProgenitor',\
+]
 
 def mock(data_frame=False):
+	"""Returns a tiny mock dataset
+
+	Arguments:
+		data_frame (bool):  whether to return a DataFrame or NumPy array (default is
+		NumPy array)
+	Return:
+		small dataset, suitable for testing algorithms in :mod:`src.traverse`
+	"""
 	d = np.array([[0,1,2,3,4,5,6,7,8,9], # nodeIndex
                 [-1,0,1,1,3,3,-1,6,7,-1], # descendantIndex
                 [4,3,2,2,1,1,4,3,2,2], # snapshotNumber
@@ -28,18 +40,8 @@ def mock(data_frame=False):
 		d = pd.DataFrame(d, columns=columns[0:4])
 	return d
 
-def data(filename=filename, numpy_file="./output/data.np", data_frame=False):
-	"""DHalo data reader.
-
-	Arguments:
-		filename (str): HDF5 data store
-		numpy_file (str): filename to which NumPy array object can be saved (for
-			faster re-reads); this is later used in :func:`src.read.retrieve`
-		data_frame (bool): whether to return a DataFrame or not (default not, returns
-			NumPy array)
-
-	Return:
-		numpy.ndarray / pandas.DataFrame:  DHalo catalogue
+def data(hdf5_file=hdf5_file, numpy_file=numpy_file, data_frame=False):
+	"""Reads DHalo data into memory
 
 	**Output data format:**
 
@@ -75,16 +77,27 @@ def data(filename=filename, numpy_file="./output/data.np", data_frame=False):
 	isMainProgenitor:
 		1 if it is
 
-	:Example:
+	Arguments:
+		hdf5_file (str): filename of an HDF5 data store
+		numpy_file (str): filename to which NumPy array object can be saved (for
+			faster re-reads);  this is later used for faster data retrieval in
+			:func:`src.read.retrieve`;  if ``None``, no data is cached
+		data_frame (bool): whether to return a DataFrame or not (default not, returns
+			NumPy array)
 
-	To retrieve a single halo, run
+	Return:
+		numpy.ndarray / pandas.DataFrame:  DHalo catalogue
 
-	.. code-block:: python
+	Example:
+		To retrieve a single halo, run
 
-		d = read.data()
-		h = d[np.where(d[:,ID] == 123)][0]
+		.. code-block:: python
+
+			d = read.data()
+			h = d[np.where(d[:,ID] == 123)][0]
 	"""
-	f = h5py.File(filename, 'r')
+
+	f = h5py.File(hdf5_file, 'r')
 	t = f['/haloTrees']
 	if data_frame:
 		d = pd.DataFrame({column: np.array(t[column].value) for column in columns})
@@ -98,7 +111,7 @@ def data(filename=filename, numpy_file="./output/data.np", data_frame=False):
 	f.close()
 	return d
 
-def retrieve(numpy_file="./output/data.np"):
+def retrieve(numpy_file=numpy_file):
 	"""Load from NumPy, not HDF5 source.
 
 	Retrieves NumPy object saved by :func:`src.read.data`
@@ -109,10 +122,7 @@ def retrieve(numpy_file="./output/data.np"):
 	"""
 	return np.load(open(numpy_file, 'r'))
 
-def main():
-	print "%s:"%filename
-	print data(data_frame=True).head()
-
 if __name__ == '__main__':
-	main()
+	print "%s:"%hdf5_file
+	print data(data_frame=True).head()
 
