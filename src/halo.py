@@ -7,13 +7,16 @@ import read
 import traverse
 
 def get(h, d):
-	"""Finds halo given a ``nodeIndex``
+	"""Returns halo (row of data) given a ``nodeIndex``
 	
-	Built-in fallback, so that when given halo it returns it.
+	The implementation is idempotent, so that when it does receive an actual halo,
+	it returns the unchanged data row.
 
 	Arguments:
 		h (int): ``nodeIndex`` queried
 		d (numpy.ndarray): DHalo tree data, as provided by :mod:`src.read`
+	Return:
+		h (numpy.ndarray): row of argument ``d`` of the given ``nodeIndex``
 	"""
 
 	if (type(h) == int or type(h) == np.int64):
@@ -25,26 +28,13 @@ def get(h, d):
 		raise TypeError("Halo must be either ID or a NumPy array, not %s"%(type(h)))
 	return h
 
-def all_progenitors(tree, key):
-	"""Finds all halo IDs belonging to a given merger tree
-
-	**Acknowledgements:**
-		https://stackoverflow.com/a/9807955
-	"""
-	if key in tree:
-		yield tree[key]
-	for node in tree:
-		if isinstance(tree[node], list):
-			for i in tree[node]:
-				for j in all_progenitors(i, key):
-					yield j
-
 def progenitors(h, d):
-	"""
-	Finds progenitors of halo ``h``:
+	"""Finds progenitors of ``h``
+
+	The following search is employed:
 
 	- find all haloes of which ``h`` is a **host of a descendant**
-	- find host of **these haloes**
+	- find hosts of **these haloes**
 	- keep unique ones
 	"""
 	h = get(h, d)
@@ -52,16 +42,19 @@ def progenitors(h, d):
 
 def host(h, d):
 	"""Finds host of ``h``
+
+	Recursively continues until hits the main halo, useful for potentially
+	multiply embedded subhaloes.
 	"""
+	# return d[np.where(d[:,ID] == h[HOST])][0]
 	h = get(h, d)
 	if h[HOST] == h[HOST]:
 		return h
 	else:
 		host(d[np.where(d[:,ID] == h[HOST])][0], d)
-	# return d[np.where(d[:,ID] == h[HOST])][0]
 
 def is_main(h, d):
-	"""Checks if halo is a subhalo, or a main FoF group
+	"""Checks if halo is a main halo using :func:`host`
 	"""
 	h = get(h, d)
 	result = True if h[ID] == h[HOST] else False
@@ -74,7 +67,10 @@ def descendant(h, d):
 	return d[np.where(d[:,ID] == h[DESC])][0]
 
 def descendant_host(h, d):
-	"""Finds host--descendant of ``h``
+	"""Finds host of a descendant of ``h``
+
+	DHalo uses this value to keep track of the most massive part of subhaloes in
+	case of splitting, preventing "multiply-progenitored" haloes.
 	"""
 	h = get(h, d)
 	return d[np.where(d[:,ID] == h[DESC_HOST])][0]
@@ -88,5 +84,5 @@ def subhaloes(h, d):
 if __name__ == '__main__':
 	d = read.retrieve()
 	for id in map(int, sys.argv[1].split(",")):
-		print get(id, d)
+		traverse.yaml_from_data(id, d, recursive=False)
 

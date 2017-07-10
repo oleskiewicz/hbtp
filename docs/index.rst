@@ -90,8 +90,4 @@ Tree diagram
 
 .. todo::
 
-  - implement MAH construction from tree format
-    - crude way already in place
-    - generate Dot diagram
-    - make it fast
-
+  - rewrite for useful Dot (full tree) & TSV (only MAH of a halo) outputs
