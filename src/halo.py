@@ -88,5 +88,5 @@ def subhaloes(h, d):
 if __name__ == '__main__':
 	d = read.retrieve()
 	for id in map(int, sys.argv[1].split(",")):
-		traverse.write_yaml(id, d, get(id, d)[MASS], recursive=True)
+		print get(id, d)
 

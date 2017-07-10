@@ -145,21 +145,34 @@ def dot_from_tree(t):
 def mah_from_tree(t, d, f=0.01):
 	"""Naive, slow implementation of group-by for all progenitors
 	"""
-	progs = np.array([halo.get(id, d) for id in \
-		list(halo.all_progenitors(t[0], 'root'))])
 	m0 = t[0]['properties']['particleNumber']
 	mah = []
-	for snap in np.unique(progs[:,SNAP]):
+	for snap in np.unique(d[:,SNAP]):
 		m = 0
-		for prog in progs[np.where(progs[:,SNAP] == snap)]:
-			if prog[MASS] > f*m0:
-				m += prog[MASS]
+		for h in d[np.where(d[:,SNAP] == snap)]:
+			if h[MASS] > f*m0:
+				m += h[MASS]
 		mah.append([snap, m])
 	return np.array(mah)
+
+def dot_from_mah(m, t, d):
+	print "\t%s;"%(" -> ".join(["snap_%02d"%(s[0]) for s in m]))
+	for s in m:
+		print "\tsnap_%02d [label=\"snap_%02d, %d\"];"%(s[0], s[0], s[1])
+		print "\t{ rank=same; snap_%02d; %s };"%(s[0], "; ".join(\
+			map(str,d[np.where(d[:,SNAP] == s[0])][:,ID])))
 
 if __name__ == '__main__':
 	d = read.retrieve()
 	h = halo.get(int(sys.argv[1]), d)
 
 	t = tree_from_data(h, d, [MASS, SNAP, MAIN_PROG, DESC, DESC_HOST])
-	mah = mah_from_tree(t, d, 0.1)
+	d = np.array([halo.get(id, d) for id in \
+		list(halo.all_progenitors(t[0], 'root'))])
+	m = mah_from_tree(t, d, 0.01)
+	print "digraph merger_tree { rankdir=BT;"
+	dot_from_tree(t)
+	print "\tsubgraph snapshots { rankdir=BT;"
+	dot_from_mah(m, t, d)
+	print "\t}"
+	print "}"
