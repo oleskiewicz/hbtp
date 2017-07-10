@@ -91,3 +91,5 @@ Tree diagram
 .. todo::
 
   - rewrite for useful Dot (full tree) & TSV (only MAH of a halo) outputs
+  - implement Aaron's :math:`f` parameter (in place of NFW one)
+    - requires density profile data, or at the very least ``c`` value
