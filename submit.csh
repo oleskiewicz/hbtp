@@ -1,10 +1,13 @@
 #!/usr/bin/env tcsh
 
-#BSUB -q bench1
-#BSUB -P durham
-#BSUB -n 1
-#BSUB -J dhalo_mah
-#BSUB -oo log/log_1.txt
-#BSUB -eo log/err_1.txt
+echo "nodeIndex\tsnapshotNumber\tparticleNumber" > ./output/mah-melted.tsv
+foreach id (`more ./output/ids.txt`)
+  bsub -P durham \
+       -n 1 \
+       -q bench1 \
+       -J "mah_$id" \
+       -oo ./log/log.txt \
+       -eo ./log/err.txt \
+       python ./src/traverse.py $id
+end
 
-make

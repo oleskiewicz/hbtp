@@ -1,18 +1,19 @@
-IDS:=37048400000752
+IDS:=$(shell more ./output/ids.txt)
 
-plot: $(foreach ID,$(IDS),./plots/mah_$(ID).pdf)
+plots: $(foreach ID,$(IDS),./plots/mah_$(ID).pdf)
 
 docs:
 	cd docs; make html
 
 ./plots/mah_%.pdf: ./output/mah_%.dot
-	dot -Tpdf -o $@ $<
+	dot -Tpdf -o "$@" "$<"
 
 ./output/mah_%.dot: ./src/traverse.py
-	python $< $* > $@
+	python $< "$*"
 
 clean:
 	rm -f ./output/*.dot
 
-.PHONY: plot clean docs
-.PRECIOUS: ./output/mah_%.dot
+.PHONY: plots clean docs
+.PRECIOUS: ./output/mah_%.dot ./output/mah_%.tsv
+
