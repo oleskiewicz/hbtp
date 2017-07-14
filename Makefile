@@ -1,15 +1,18 @@
 IDS:=$(shell more ./output/ids.txt)
 
 plots: $(foreach ID,$(IDS),./plots/mah_$(ID).pdf)
-
+ids: ./output/ids.txt
 docs:
 	cd docs; make html
 
+./output/ids.txt: ./src/query.py
+	python $< $@
+
 ./plots/mah_%.pdf: ./output/mah_%.dot
-	dot -Tpdf -o "$@" "$<"
+	dot -Tpdf -o $@ $<
 
 ./output/mah_%.dot: ./src/traverse.py
-	python $< "$*"
+	python $< $*
 
 clean:
 	rm -f ./output/*.dot
