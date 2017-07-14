@@ -1,7 +1,8 @@
-:mod:`src.halo`
+:mod:`src.query`
 ================
 
-.. automodule:: src.halo
+.. automodule:: src.query
   :members:
   :undoc-members:
   :show-inheritance:
+

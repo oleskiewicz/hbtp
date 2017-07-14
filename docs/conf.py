@@ -135,10 +135,6 @@ html_static_path = ['_static']
 # using the given strftime format.
 #html_last_updated_fmt = '%b %d, %Y'
 
-# If true, SmartyPants will be used to convert quotes and dashes to
-# typographically correct entities.
-html_use_smartypants = True
-
 # Custom sidebar templates, maps document names to template names.
 html_sidebars = {
 	"**": [ "localtoc.html", "globaltoc.html", "searchbox.html", ],
@@ -188,7 +184,7 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'MergerTreeTraversal.tex', u'Merger Tree traversal Documentation',
+  ('index', 'MergerTree.tex', u'Merger Tree traversal Documentation',
    u'Piotr Oleskiewicz', 'manual'),
 ]
 
@@ -218,7 +214,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'mergertreetraversal', u'Merger Tree traversal Documentation',
+    ('index', 'mergertree', u'Merger Tree Documentation',
      [u'Piotr Oleskiewicz'], 1)
 ]
 
@@ -232,8 +228,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'MergerTreeTraversal', u'Merger Tree traversal Documentation',
-   u'Piotr Oleskiewicz', 'MergerTreetraversal', 'One line description of project.',
+  ('index', 'MergerTree', u'Merger Tree Documentation',
+   u'Piotr Oleskiewicz', 'MergerTree', 'DHalo merger tree traversal programme',
    'Miscellaneous'),
 ]
 

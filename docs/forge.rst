@@ -1,7 +1,8 @@
-:mod:`src.halo`
+:mod:`src.forge`
 ================
 
-.. automodule:: src.halo
+.. automodule:: src.forge
   :members:
   :undoc-members:
   :show-inheritance:
+
