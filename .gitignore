@@ -1,2 +1,6 @@
-_env/
-_docs/
+/data/
+/docs/build/
+/env/
+/log/
+/output/
+/plots/
