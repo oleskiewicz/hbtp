@@ -300,7 +300,7 @@ if __name__ == '__main__':
 		list(all_progenitors(t[0], 'root'))])
 	m = mah_from_tree(log, t, p, d, nfw_f)
 
-	with open("./output/mah-melted.tsv", 'a') as file_tsv:
+	with open("./output/mah.tsv", 'a') as file_tsv:
 		tsv_from_mah(file_tsv, m)
 
 	with open("./output/mah_%d.dot"%(root), 'w') as file_dot:
