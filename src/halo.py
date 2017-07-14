@@ -81,6 +81,11 @@ def subhaloes(h, d):
 	h = get(h, d)
 	return d[np.where(d[:,HOST] == h[ID])][:,ID]
 
+def mass(h, d):
+	"""Finds mass of central halo and all subhaloes
+	"""
+	return np.sum(np.array(map(lambda ih: get(ih, d), subhaloes(h, d)))[:,MASS])
+
 if __name__ == '__main__':
 	d = read.retrieve()
 	for id in map(int, sys.argv[1].split(",")):
