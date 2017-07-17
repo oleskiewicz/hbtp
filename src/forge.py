@@ -43,8 +43,10 @@ def cast(data):
 	as described in https://cran.r-project.org/web/packages/reshape2/reshape2.pdf
 
 	Arguments:
-		data (pandas.DataFrame): input MAH DataFrame, read from a TSV written by
-			:func:`src.traverse.tsv_from_mah`
+		data (pandas.DataFrame): input MAH DataFrame in a long format, read from a
+			TSV written by :mod:`src.tree`
+	Returns:
+		pandas.DataFrame: output MAH DataFrame in a wide format
 	"""
 	return data.pivot_table(\
 		values='particleNumber',\

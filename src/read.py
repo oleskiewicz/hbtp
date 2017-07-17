@@ -33,12 +33,12 @@ def mock(data_frame=False):
 		NumPy array)
 	Returns:
 		numpy.ndarray / pandas.DataFrame: small dataset, suitable for testing
-			algorithms in :mod:`src.traverse`
+			algorithms in :mod:`src.tree`
 	"""
-	d = np.array([[0,1,2,3,4,5,6,7,8,9], # nodeIndex
-                [-1,0,1,1,3,3,-1,6,7,-1], # descendantIndex
-                [4,3,2,2,1,1,4,3,2,2], # snapshotNumber
-                [10,8,3,5,2,3,4,4,4,2]]).T # particleNumber
+	d = np.array([[ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9],     # nodeIndex
+                [-1, 0, 1, 1, 3, 3,-1, 6, 7, 1],     # descendantIndex
+                [ 4, 3, 2, 2, 1, 1, 4, 3, 2, 2],     # snapshotNumber
+                [10, 8, 3, 5, 2, 3, 4, 4, 4, 2]]).T  # particleNumber
 	if data_frame:
 		d = pd.DataFrame(d, columns=columns[0:4])
 	return d

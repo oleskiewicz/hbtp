@@ -4,7 +4,6 @@ import numpy as np
 
 from read import ID, DESC, SNAP, MASS, HOST, DESC_HOST, MAIN_PROG
 import read
-import traverse
 
 def get(h, d):
 	"""Returns halo (row of data) given a ``nodeIndex``
@@ -86,8 +85,56 @@ def mass(h, d):
 	"""
 	return np.sum(np.array(map(lambda ih: get(ih, d), subhaloes(h, d)))[:,MASS])
 
+def display(h, d, level=1, recursive=False):
+	"""Print halo in a YAML format
+
+	Can be run recursively (to generate a tree-like representation for all
+	progenitors, provided by :func:`progenitors`), or non-recursively, and
+	then it only prints one halo and ``nodeIndex`` values of all progenitors.
+
+	Arguments:
+		h (int): ``nodeIndex`` queried
+		d (numpy.ndarray): DHalo tree data, as provided by :func:`src.read.data`
+		level (int): (default=1) used to increase level counter if printed
+			recursively
+		recursive (bool): (default=False) if ``True``, descends every time a foreign
+			key is encountered;  if ``False``, only prints the IDs
+	"""
+
+	if not is_main(h, d): raise ValueError("Not a host halo!")
+
+	h = get(h, d)
+	tab = "  "
+	ind = tab*level
+
+	# HALO
+	sys.stdout.write("%s- "%(tab*(level-1)))
+	print "halo: %d"%(h[ID])
+	print "%ssnap: %d"%(ind, h[SNAP])
+	print "%smass: %d"%(ind, halo.mass(h, d))
+	print "%shost: %s"%(ind, "self" if h[HOST] == h[ID] else str(h[HOST]))
+
+	# SUBHALOES
+	print "%ssub: [%s]"%(ind, ",".join(map(str, subhaloes(h, d))))
+
+	# DESCENDANTS
+	print "%sdesc: %d"%(ind, h[DESC])
+	print "%sdesc_host: %d"%(ind, h[DESC_HOST])
+
+	# PROGENITORS
+	hh = progenitors(h, d)
+	if (len(hh) > 0):
+		if recursive:
+			print "%sprog:"%(ind)
+			for _h in hh:
+				yaml_from_data(_h, d, level+1, True)
+		else:
+			print "%sprog: [%s]"%(ind, ",".join(map(str, hh)))
+	else:
+		print "%sprog: -1"%(ind)
+
 if __name__ == '__main__':
 	d = read.retrieve()
 	for id in map(int, sys.argv[1].split(",")):
-		traverse.yaml_from_data(id, d, recursive=False)
+		display(id, d, recursive=False)
 

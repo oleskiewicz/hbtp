@@ -1,6 +1,6 @@
 #!/usr/bin/env tcsh
 
-echo "nodeIndex\tsnapshotNumber\tparticleNumber" > ./output/mah-melted.tsv
+echo "nodeIndex\tsnapshotNumber\tparticleNumber" > ./output/mah.tsv
 foreach id (`more ./output/ids.txt`)
   bsub -P durham \
        -n 1 \
@@ -8,6 +8,6 @@ foreach id (`more ./output/ids.txt`)
        -J "mah_$id" \
        -oo ./log/log.txt \
        -eo ./log/err.txt \
-       python ./src/traverse.py $id
+       python ./src/tree.py $id
 end
 

@@ -1,7 +1,7 @@
-:mod:`src.traverse`
+:mod:`src.dot`
 ===================
 
-.. automodule:: src.traverse
+.. automodule:: src.dot
   :members:
   :undoc-members:
   :show-inheritance:

@@ -1,4 +1,5 @@
-IDS:=$(shell more ./output/ids.txt)
+# IDS:=$(shell more ./output/ids.txt)
+IDS:=37048400001615
 
 plots: $(foreach ID,$(IDS),./plots/mah_$(ID).pdf)
 mah: ./plots/mah.pdf
