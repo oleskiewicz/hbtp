@@ -13,7 +13,7 @@ docs:
 ./plots/mah_%.pdf: ./output/mah_%.dot
 	dot -Tpdf -o $@ $<
 
-./output/mah_%.dot: ./src/traverse.py
+./output/mah_%.dot: ./src/tree.py
 	python $< $*
 
 ./plots/mah.pdf: ./src/plot.py ./output/mah.tsv
