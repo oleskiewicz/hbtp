@@ -87,7 +87,11 @@ if __name__ == '__main__':
 	fileConfig("./logging.conf")
 	log = logging.getLogger()
 
-	root = int(sys.argv[1])
+	with open("./output/ids.txt") as file_ids:
+		for i, line in enumerate(file_ids):
+			if i == int(sys.argv[1])-1:
+				root = int(line)
+	
 	d = read.retrieve()
 	h = halo.get(root, d)
 
@@ -108,13 +112,13 @@ if __name__ == '__main__':
 
 	log.info("Appended MAH of %d to %s"%(h[ID], "./output/mah.tsv"))
 
-	with open("./output/mah_%d.dot"%(root), 'w') as file_dot:
-		file_dot.write("digraph merger_tree { rankdir=BT;\n")
-		dot.tree(file_dot, t, d, m0, nfw_f)
-		file_dot.write("\tsubgraph snapshots {\n")
-		dot.mah(file_dot, m, p)
-		file_dot.write("\t}\n")
-		file_dot.write("}\n")
+	# with open("./output/mah_%d.dot"%(root), 'w') as file_dot:
+	# 	file_dot.write("digraph merger_tree { rankdir=BT;\n")
+	# 	dot.tree(file_dot, t, d, m0, nfw_f)
+	# 	file_dot.write("\tsubgraph snapshots {\n")
+	# 	dot.mah(file_dot, m, p)
+	# 	file_dot.write("\t}\n")
+	# 	file_dot.write("}\n")
 
-	log.info("Wrote Dot graph to ./output/mah_%d.dot"%(root))
+	# log.info("Wrote Dot graph to ./output/mah_%d.dot"%(root))
 

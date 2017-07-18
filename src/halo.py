@@ -101,8 +101,6 @@ def display(h, d, level=1, recursive=False):
 			key is encountered;  if ``False``, only prints the IDs
 	"""
 
-	if not is_main(h, d): raise ValueError("Not a host halo!")
-
 	h = get(h, d)
 	tab = "  "
 	ind = tab*level
@@ -111,7 +109,7 @@ def display(h, d, level=1, recursive=False):
 	sys.stdout.write("%s- "%(tab*(level-1)))
 	print "halo: %d"%(h[ID])
 	print "%ssnap: %d"%(ind, h[SNAP])
-	print "%smass: %d"%(ind, halo.mass(h, d))
+	print "%smass: %d"%(ind, mass(h, d))
 	print "%shost: %s"%(ind, "self" if h[HOST] == h[ID] else str(h[HOST]))
 
 	# SUBHALOES

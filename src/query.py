@@ -35,7 +35,7 @@ def process(data, query):
 		query (dict): query to be processed (see `Example`)
 	"""
 	data = data[np.where(data[:,query['filter']['by']] == query['filter']['value'])]
-	return data[data[:,query['sort']['by']].argsort()[::-1]][0:query['limit']['n'],ID]
+	return np.unique(data[data[:,query['sort']['by']].argsort()[::-1]][0:query['limit']['n'],HOST])
 
 if __name__ == '__main__':
 	d = read.retrieve()
@@ -43,7 +43,7 @@ if __name__ == '__main__':
 	q = {
 		'filter': {
 			'by': SNAP,
-			'value': 30,
+			'value': 63,
 		},
 		'sort': {
 			'by': MASS,
