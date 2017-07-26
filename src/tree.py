@@ -5,7 +5,6 @@ import logging
 from logging.config import fileConfig
 import numpy as np
 
-from read import ID, DESC, SNAP, MASS, HOST, DESC_HOST, MAIN_PROG, columns
 import read
 import halo
 import dot
@@ -34,12 +33,11 @@ def build(log, id, data):
 	Returns:
 		list: merger tree in a deeply mebedded format, rooted at the starting halo
 	"""
-	if not halo.is_main(id, d): raise ValueError("Not a host halo!")
+	if not halo.is_host(id, d): raise ValueError("Not a host halo!")
 
 	h = halo.get(id, data)
 	progenitors = halo.progenitors(h, data)
-	#TODO: [1, [[2, []], [3, [[4, []], [5, []]]], [6, []]]] -> [1, [2, 3, [4, 5], 6]]
-	return [h[ID], [] if len(progenitors) == 0 else \
+	return [h['nodeIndex'], [] if len(progenitors) == 0 else \
 		[build(log, progenitor, data) for progenitor in progenitors]]
 
 def flatten(tree):
@@ -75,13 +73,13 @@ def mah(tree, progs, data, m0, nfw_f):
 	mah = []
 	root = halo.get(tree[0], progs)
 
-	for snap in np.unique(progs[:,SNAP]):
+	for snap in np.unique(progs['snapshotNumber']):
 		sum_m = 0
-		for h in progs[np.where(progs[:,SNAP] == snap)]:
+		for h in progs[progs['snapshotNumber'] == snap]:
 			m = halo.mass(h, data)
 			if m > nfw_f*m0:
 				sum_m += m
-		mah.append([root[ID], snap, sum_m])
+		mah.append([root['nodeIndex'], snap, sum_m])
 	return np.array(mah)
 
 if __name__ == '__main__':

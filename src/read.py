@@ -8,21 +8,10 @@ import pandas as pd
 hdf5_file  = "./data/tree_063.0.hdf5"
 numpy_file = "./output/data.npy"
 
-ID        = 0
-DESC      = 1
-SNAP      = 2
-MASS      = 3
-HOST      = 4
-DESC_HOST = 5
-MAIN_PROG = 6
 columns = [\
-	'nodeIndex',\
-	'descendantIndex',\
-	'snapshotNumber',\
-	'particleNumber',\
-	'hostIndex',\
-	'descendantHost',\
-	'isMainProgenitor',\
+	["nodeIndex", "descendantIndex", "snapshotNumber", "particleNumber",
+	"hostIndex", "descendantHost", "isMainProgenitor",],\
+	["int64", "int64", "int32", "int32", "int64", "int64", "int32",],\
 ]
 
 def mock(data_frame=False):
@@ -43,7 +32,7 @@ def mock(data_frame=False):
 		d = pd.DataFrame(d, columns=columns[0:4])
 	return d
 
-def data(hdf5_file, numpy_file=None, data_frame=False):
+def data(hdf5_file, numpy_file=numpy_file, data_frame=False):
 	"""Reads DHalo data into memory
 
 	**Output data format:**
@@ -101,10 +90,12 @@ def data(hdf5_file, numpy_file=None, data_frame=False):
 	"""
 
 	f = h5py.File(hdf5_file, 'r')
-	t = f['/haloTrees']
 
-	d = np.array([np.array(t[column].value) for column in columns]).T
-	d[0] = np.array([0 for column in columns])
+	d = np.core.records.fromarrays([np.array(f['/haloTrees/%s'%column].value) \
+		for column in columns[0]], names = columns[0], formats = columns[1])
+
+	# d[0] = np.array([0 for column in columns])
+
 	if numpy_file is not None:
 		with open(numpy_file, 'w') as numpy_file:
 			np.save(numpy_file, d)

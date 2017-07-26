@@ -2,7 +2,7 @@
 import sys
 import numpy as np
 
-from read import ID, DESC, SNAP, MASS, HOST, DESC_HOST, MAIN_PROG
+# from read import ID, DESC, SNAP, MASS, HOST, DESC_HOST, MAIN_PROG
 import read
 
 def get(h, d):
@@ -19,9 +19,11 @@ def get(h, d):
 	"""
 
 	if (type(h) == int or type(h) == np.int64):
-		h = 0 if h is -1 else h
-		h = d[np.where(d[:,ID] == h)][0]
-	elif type(h) == np.ndarray:
+		if h == -1:
+			h = np.zeros(7, dtype='int')
+		else:
+			h = d[d['nodeIndex'] == h][0]
+	elif (type(h) == np.ndarray or type(h) == np.void):
 		pass
 	else:
 		raise TypeError("Halo must be either ID or a NumPy array, not %s"%(type(h)))
@@ -37,7 +39,8 @@ def progenitors(h, d):
 	- keep unique ones
 	"""
 	h = get(h, d)
-	return np.unique(d[np.where(d[:,DESC_HOST] == h[ID])][:,HOST])
+	# return np.unique(d[np.where(d[:,DESC_HOST] == h[ID])][:,HOST])
+	return np.unique([host(prog, d) for prog in d[d['descendantHost'] == h['nodeIndex']]])
 
 def host(h, d):
 	"""Finds host of ``h``
@@ -45,25 +48,24 @@ def host(h, d):
 	Recursively continues until hits the main halo, useful for potentially
 	multiply embedded subhaloes.
 	"""
-	# return d[np.where(d[:,ID] == h[HOST])][0]
 	h = get(h, d)
-	if h[HOST] == h[HOST]:
+	if h['nodeIndex'] == h['hostIndex']:
 		return h
 	else:
-		host(d[np.where(d[:,ID] == h[HOST])][0], d)
+		host(d[d['nodeIndex'] == h['hostIndex']][0], d)
 
-def is_main(h, d):
+def is_host(h, d):
 	"""Checks if halo is a main halo using :func:`host`
 	"""
 	h = get(h, d)
-	result = True if h[ID] == h[HOST] else False
+	result = True if h['nodeIndex'] == h['hostIndex'] else False
 	return result
 
 def descendant(h, d):
 	"""Finds descendant of ``h``
 	"""
 	h = get(h, d)
-	return d[np.where(d[:,ID] == h[DESC])][0]
+	return d[d['nodeIndex'] == h['descendantIndex']][0]
 
 def descendant_host(h, d):
 	"""Finds host of a descendant of ``h``
@@ -72,18 +74,18 @@ def descendant_host(h, d):
 	case of splitting, preventing "multiply-progenitored" haloes.
 	"""
 	h = get(h, d)
-	return d[np.where(d[:,ID] == h[DESC_HOST])][0]
+	return d[d['nodeIndex'] == h['descendantHost']][0]
 
 def subhaloes(h, d):
-	"""Finds haloes for which ``h`` is a host
+	"""Finds halo indices for which ``h`` is a host
 	"""
 	h = get(h, d)
-	return d[np.where(d[:,HOST] == h[ID])][:,ID]
+	return d[d['hostIndex'] == h['nodeIndex']]['nodeIndex']
 
 def mass(h, d):
 	"""Finds mass of central halo and all subhaloes
 	"""
-	return np.sum(np.array(map(lambda ih: get(ih, d), subhaloes(h, d)))[:,MASS])
+	return np.sum(np.array(map(lambda ih: get(ih, d), subhaloes(h, d)))['particleNumber'])
 
 def display(h, d, level=1, recursive=False):
 	"""Print halo in a YAML format
@@ -107,29 +109,29 @@ def display(h, d, level=1, recursive=False):
 
 	# HALO
 	sys.stdout.write("%s- "%(tab*(level-1)))
-	print "halo: %d"%(h[ID])
-	print "%ssnap: %d"%(ind, h[SNAP])
+	print "halo: %d"%(h['nodeIndex'])
+	print "%ssnap: %d"%(ind, h['snapshotNumber'])
 	print "%smass: %d"%(ind, mass(h, d))
-	print "%shost: %s"%(ind, "self" if h[HOST] == h[ID] else str(h[HOST]))
+	print "%shost: %s"%(ind, "self" if h['hostIndex'] == h['nodeIndex'] else str(h['hostIndex']))
 
 	# SUBHALOES
-	print "%ssub: [%s]"%(ind, ",".join(map(str, subhaloes(h, d))))
+	# print "%ssub: [%s]"%(ind, ",".join(map(str, subhaloes(h, d))))
 
 	# DESCENDANTS
-	print "%sdesc: %d"%(ind, h[DESC])
-	print "%sdesc_host: %d"%(ind, h[DESC_HOST])
+	# print "%sdesc: %d"%(ind, h[DESC])
+	# print "%sdesc_host: %d"%(ind, h[DESC_HOST])
 
 	# PROGENITORS
-	hh = progenitors(h, d)
-	if (len(hh) > 0):
-		if recursive:
-			print "%sprog:"%(ind)
-			for _h in hh:
-				yaml_from_data(_h, d, level+1, True)
-		else:
-			print "%sprog: [%s]"%(ind, ",".join(map(str, hh)))
-	else:
-		print "%sprog: -1"%(ind)
+	# hh = progenitors(h, d)
+	# if (len(hh) > 0):
+	# 	if recursive:
+	# 		print "%sprog:"%(ind)
+	# 		for _h in hh:
+	# 			yaml_from_data(_h, d, level+1, True)
+	# 	else:
+	# 		print "%sprog: [%s]"%(ind, ",".join(map(str, hh)))
+	# else:
+	# 	print "%sprog: -1"%(ind)
 
 if __name__ == '__main__':
 	d = read.retrieve()

@@ -4,13 +4,14 @@ import logging
 from logging.config import fileConfig
 import numpy as np
 
-from read import ID, DESC, SNAP, MASS, HOST, DESC_HOST, MAIN_PROG, columns
+# from read import ID, DESC, SNAP, MASS, HOST, DESC_HOST, MAIN_PROG, columns
 import halo
 
 def node(h, m, m0, nfw_f):
 	return "\t%d [label=\"%s (%d, %d, %d)\", style=filled, fillcolor=%s];\n"%(\
-		h[ID], "%d"%(h[ID]) if h[DESC] == h[DESC_HOST] else "%d > %d"%(h[ID], h[DESC]), \
-		h[MAIN_PROG], m, h[SNAP], "green" if m > nfw_f*m0  else "red")
+		h['nodeIndex'], "%d"%(h['nodeIndex']) if h['descendantIndex'] == h['descendantHost'] \
+		else "%d > %d"%(h['nodeIndex'], h['descendantIndex']), \
+		h['isMainProgenitor'], m, h['snapshotNumber'], "green" if m > nfw_f*m0  else "red")
 
 def tree(file, t, d, m0, nfw_f):
 	"""Generates Dot graph from merger tree
@@ -49,5 +50,5 @@ def mah(file, m, progs):
 	for s in m:
 		file.write("\tsnap_%02d [label=\"(%d, %02d)\"];\n"%(s[1], s[2], s[1]))
 		file.write("\t{ rank=same; snap_%02d; %s };"%(s[1], "; \n".join(\
-			map(str, progs[np.where(progs[:,SNAP] == s[1])][:,ID]))))
+			map(str, progs[progs['snapshotNumber'] == s[1]]['nodeIndex']))))
 
