@@ -10,6 +10,27 @@ Modules
 
 	**
 
+Data
+====
+
+Data files, for Millennium (Galform, DHalo format) and Liminality simulations::
+
+  data
+  ├── liminality
+  │   ├── fr
+  │   │   ├── dhalo
+  │   │   │   ├── particle_list_122.0.hdf5
+  │   │   │   └── tree_122.0.hdf5
+  │   │   └── hbt -> /gpfs/data/rrtx34/fr6_b64n512/new_HBT/subcat/
+  │   └── gr
+  │       ├── dhalo
+  │       │   ├── particle_list_122.0.hdf5
+  │       │   └── tree_122.0.hdf5
+  │       └── hbt -> /gpfs/data/rrtx34/GR_b64n512/new_HBT/subcat/
+  └── millennium -> /gpfs/data/Galform/Merger_Trees/Millennium/new/treedir_063
+
+Use ``ln -s`` to link ``data`` directory here to an appropriate catalogue.
+
 Merger tree types
 =================
 
