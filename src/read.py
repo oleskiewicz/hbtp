@@ -43,7 +43,7 @@ def mock(data_frame=False):
 		d = pd.DataFrame(d, columns=columns[0:4])
 	return d
 
-def data(hdf5_file, numpy_file, data_frame=False):
+def data(hdf5_file, numpy_file=None, data_frame=False):
 	"""Reads DHalo data into memory
 
 	**Output data format:**

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import sys
+import fcntl
 import logging
 from logging.config import fileConfig
 import numpy as np
@@ -97,28 +98,27 @@ if __name__ == '__main__':
 
 	nfw_f = 0.01
 	m0 = halo.mass(h, d)
-
-	log.info("Found halo %d of mass %d at snapshot %d"%(root, m0, h[SNAP]))
+	log.info("Found halo %d of mass %d at snapshot %d"%(root, m0, h['snapshotNumber']))
 
 	t = build(log, h, d)
 	p = np.array([halo.get(id, d) for id in list(flatten(t))])
 	m = mah(t, p, d, m0, nfw_f)
-
 	log.info("Built a tree rooted at halo %d with %d progenitors"%(root, np.shape(p)[0]))
 
-	with open("./output/mah.tsv", 'a') as file_tsv:
+	with open(file_out, 'a') as file_tsv:
+		fcntl.flock(file_tsv, fcntl.LOCK_EX)
+		log.info("Locked %s"%(file_out))
 		for row in m:
 			file_tsv.write("%d\t%02d\t%d\n"%(row[0], row[1], row[2]))
+		fcntl.flock(file_tsv, fcntl.LOCK_UN)
+		log.info("Appended MAH of %d to %s, unlocking file"%(root, file_out))
 
-	log.info("Appended MAH of %d to %s"%(h[ID], "./output/mah.tsv"))
-
-	# with open("./output/mah_%d.dot"%(root), 'w') as file_dot:
-	# 	file_dot.write("digraph merger_tree { rankdir=BT;\n")
-	# 	dot.tree(file_dot, t, d, m0, nfw_f)
-	# 	file_dot.write("\tsubgraph snapshots {\n")
-	# 	dot.mah(file_dot, m, p)
-	# 	file_dot.write("\t}\n")
-	# 	file_dot.write("}\n")
-
-	# log.info("Wrote Dot graph to ./output/mah_%d.dot"%(root))
+	with open("./output/mah_%d.dot"%(root), 'w') as file_dot:
+		file_dot.write("digraph merger_tree { rankdir=BT;\n")
+		dot.tree(file_dot, t, d, m0, nfw_f)
+		file_dot.write("\tsubgraph snapshots {\n")
+		dot.mah(file_dot, m, p)
+		file_dot.write("\t}\n")
+		file_dot.write("}\n")
+		log.info("Wrote Dot graph to ./output/mah_%d.dot"%(root))
 
