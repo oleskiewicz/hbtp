@@ -1,5 +1,5 @@
-# IDS:=$(shell more ./output/ids.txt)
-IDS:=37048400000752
+IDS:=$(shell more ./output/ids.txt)
+# IDS:=37048400000752
 
 plots: $(foreach ID,$(IDS),./plots/mah_$(ID).pdf)
 mah: ./plots/mah.pdf
@@ -14,7 +14,7 @@ docs:
 	dot -Tpdf -o $@ $<
 
 ./output/mah_%.dot: ./src/tree.py
-	python $< $*
+	python $< $* ./output/mah.tsv
 
 ./plots/mah.pdf: ./src/plot.py ./output/mah.tsv
 	python $< $(word 2,$^) $@

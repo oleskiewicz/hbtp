@@ -88,11 +88,15 @@ if __name__ == '__main__':
 	fileConfig("./logging.conf")
 	log = logging.getLogger()
 
-	with open("./output/ids.txt") as file_ids:
-		for i, line in enumerate(file_ids):
-			if i == int(sys.argv[1])-1:
-				root = int(line)
-	
+	# # array submission
+	# with open("./output/ids.txt") as file_ids:
+	# 	for i, line in enumerate(file_ids):
+	# 		if i == int(sys.argv[1])-1:
+	# 			root = int(line)
+	# single-job submission
+	root = int(sys.argv[1])
+	file_out = sys.argv[2]
+
 	d = read.retrieve()
 	h = halo.get(root, d)
 
