@@ -116,8 +116,6 @@ class HBTReader:
 	def LoadSubhalos(self, isnap=-1, selection=None, show_progress=False):
 		"""Load all subhaloes from a snapshot
 
-		``selection`` 
-
 		.. Note::
 
 			``selection=('Rank', 'Nbound')`` will load only the Rank and Nbound fields
@@ -139,7 +137,7 @@ class HBTReader:
 
 		Arguments:
 			isnap (int): (default = -1) snapshot
-			selection (numpy.s_): (default = None) can be a single field, a list of
+			selection (numpy.s\_): (default = None) can be a single field, a list of
 				the field names or a single subhalo index
 			show_progress (bool): (default = False)
 		"""""
