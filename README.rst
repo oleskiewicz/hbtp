@@ -116,8 +116,6 @@ Directory
   │   ├── read.py
   │   ├── tree.py
   ├── submit.csh
-  ├── tags
-  └── TODO.rst
-
-.. include:: ../TODO.rst
+  ├── submit_array.csh
+  └── tags
 
