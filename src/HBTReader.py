@@ -284,6 +284,12 @@ class HBTReader:
 		NewPart=[x[1] for x in NewPart]
 		return NewPart
 
+	def GetProfile(self, TrackId, isnap=-1):
+		"""Returns particle positions, centred at halo and normalised to R200"""
+		subhalo = self.GetSub(TrackId, isnap)
+		particles = self.GetParticleProperties(TrackId, isnap)['ComovingPosition'] - subhalo['ComovingAveragePosition'][0]
+		return particles / subhalo['BoundR200CritComoving']
+
 	def GetSubsOfHost(self, HostHaloId, isnap=-1):
 		"""Loads all subhaloes belonging to a host halo
 		
@@ -296,12 +302,6 @@ class HBTReader:
 		with h5py.File(self.GetFileName(isnap), 'r') as subfile:
 			trackIds = subfile['Membership/GroupedTrackIds'][HostHaloId]
 		return np.hstack([self.GetSub(trackId, isnap) for trackId in trackIds])
-
-	def GetProfile(self, TrackId, isnap=-1):
-		"""Returns particle positions, centred at halo and normalised to R200"""
-		subhalo = self.GetSub(TrackId, isnap)
-		particles = self.GetParticleProperties(TrackId, isnap)['ComovingPosition'] - subhalo['ComovingAveragePosition'][0]
-		return particles / subhalo['BoundR200CritComoving']
 
 	def GetMergerTree(self, file, log, HostHaloIds, isnap=-1):
 		"""Builds a FOF merger tree starting at a host halo ID
@@ -317,33 +317,34 @@ class HBTReader:
 		"""
 		if len(HostHaloIds) > 0:
 			for HostHaloId in HostHaloIds:
-				subs = self.GetSubsOfHost(HostHaloId, isnap=isnap)
+				subhaloes = self.GetSubsOfHost(HostHaloId, isnap=isnap)
 				try:
-					previous_hosts = np.unique([self.GetSub(track, isnap=isnap-1)[0]['HostHaloId']\
-						for track in list(subs['TrackId'])])
 					log.info("{halo: %03d_%d, tracks: %s}"%\
-						(isnap, HostHaloId, str(subs['TrackId'])))
+						(isnap, HostHaloId, str(subhaloes['TrackId'])))
+
+					previous_hosts = np.unique([self.GetSub(track, isnap=isnap-1)[0]['HostHaloId']\
+						for track in list(subhaloes['TrackId']) if self.GetSub(track, isnap=isnap-1)[0]['Rank'] == 0])
+
 					for PreviousHostHaloId in previous_hosts:
 						file.write("\t%03d000%d -> %03d000%d;\n"%\
 							(isnap, HostHaloId, isnap-1, PreviousHostHaloId))
+
 					self.GetMergerTree(f, log, previous_hosts, isnap-1)
 				except:
 					log.info("{halo: %03d_%d, NA}"%(isnap, HostHaloId))
 				finally:
 					file.write("\t%03d000%d [label=\"%d, %d, %d\"];\n"%\
-						(isnap, HostHaloId, isnap, HostHaloId, len(subs)))
+						(isnap, HostHaloId, isnap, HostHaloId, len(subhaloes)))
 
 if __name__ == '__main__':
 	fileConfig("./logging.conf")
 	l = logging.getLogger()
 
-	arg1, arg2 = int(sys.argv[1]), int(sys.argv[2])
+	host0, snap0 = int(sys.argv[1]), int(sys.argv[2])
 	reader=HBTReader("./data/")
 
-	print reader.GetSubsOfHost(arg1, arg2)
-
-	# with open(sys.argv[2], 'w') as f:
-	# 	f.write("digraph {\n")
-	# 	reader.GetMergerTree(f, l, [host0,], snap0)
-	# 	f.write("}\n")
+	with open("./output/hbt.dot", 'w') as f:
+		f.write("digraph {\n")
+		reader.GetMergerTree(f, l, [host0,], snap0)
+		f.write("}\n")
 
