@@ -297,6 +297,12 @@ class HBTReader:
 			trackIds = subfile['Membership/GroupedTrackIds'][HostHaloId]
 		return np.hstack([self.GetSub(trackId, isnap) for trackId in trackIds])
 
+	def GetProfile(self, TrackId, isnap=-1):
+		"""Returns particle positions, centred at halo and normalised to R200"""
+		subhalo = self.GetSub(TrackId, isnap)
+		particles = self.GetParticleProperties(TrackId, isnap)['ComovingPosition'] - subhalo['ComovingAveragePosition'][0]
+		return particles / subhalo['BoundR200CritComoving']
+
 	def GetMergerTree(self, file, log, HostHaloIds, isnap=-1):
 		"""Builds a FOF merger tree starting at a host halo ID
 		
@@ -327,11 +333,6 @@ class HBTReader:
 					file.write("\t%03d000%d [label=\"%d, %d, %d\"];\n"%\
 						(isnap, HostHaloId, isnap, HostHaloId, len(subs)))
 
-	def GetProfile(self, TrackId, isnap=-1):
-		subhalo = self.GetSub(TrackId, isnap)
-		particles = self.GetParticleProperties(TrackId, isnap)['ComovingPosition'] - subhalo['ComovingAveragePosition'][0]
-		return particles / subhalo['BoundR200CritComoving']
-
 if __name__ == '__main__':
 	fileConfig("./logging.conf")
 	l = logging.getLogger()
@@ -339,7 +340,7 @@ if __name__ == '__main__':
 	arg1, arg2 = int(sys.argv[1]), int(sys.argv[2])
 	reader=HBTReader("./data/")
 
-	print reader.GetProfile(arg1, arg2)
+	print reader.GetSubsOfHost(arg1, arg2)
 
 	# with open(sys.argv[2], 'w') as f:
 	# 	f.write("digraph {\n")
