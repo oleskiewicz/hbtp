@@ -290,16 +290,6 @@ class HBTReader:
 		NewPart=[x[1] for x in NewPart]
 		return NewPart
 
-	def GetProfile(self, TrackId, isnap=-1):
-		"""Returns normalised, binned particle positions of a subhalo"""
-		subhalo = self.GetSub(TrackId, isnap)
-		positions = (self.GetParticleProperties(TrackId, isnap)['ComovingPosition']\
-			- subhalo['ComovingAveragePosition'][0])\
-			/ subhalo['BoundR200CritComoving']
-		distances = map(lambda row: np.sqrt(np.sum(map(lambda x: x*x, row))),\
-			positions)
-		return np.histogram(distances, bins=np.logspace(-2.5, 0.0, 32))
-
 	def LoadHostHalos(self, isnap=-1, selection=None):
 		"""Returns spatial properties of FoF groups for a snapshot"""
 
@@ -388,6 +378,38 @@ class HBTReader:
 					file.write("\t%03d000%d [label=\"%d, %d, %d\"];\n"%\
 						(isnap, HostHaloId, isnap, HostHaloId, len(subhaloes)))
 
+	def GetProfile(self, TrackId, isnap=-1, bins=None):
+		"""Returns normalised, binned particle positions of a subhalo"""
+
+		subhalo = self.GetSub(TrackId, isnap)
+		positions = (self.GetParticleProperties(TrackId, isnap)['ComovingPosition']\
+			- subhalo['ComovingAveragePosition'][0])\
+			/ subhalo['BoundR200CritComoving']
+
+		if bins is not None:
+			distances = map(lambda row: np.sqrt(np.sum(map(lambda x: x*x, row))),\
+				positions)
+			return np.histogram(distances, bins=bins)
+		else:
+			return positions
+
+	def GetHostProfile(self, HostHaloId, isnap=-1, bins=None):
+		"""Returns normalised, binned particle positions of a FoF group"""
+
+		hosthalo = self.LoadHostHalos(isnap, selection=HostHaloId)
+		subhalos = self.GetSubsOfHost(HostHaloId, isnap)['TrackId']
+		positions = [((particle - hosthalo['CenterComoving'])\
+			/ hosthalo['R200CritComoving'])[0]\
+			for subhalo in subhalos for particle in\
+			self.GetParticleProperties(subhalo, isnap)['ComovingPosition']]
+
+		if bins is not None:
+			distances = map(lambda row: np.sqrt(np.sum(map(lambda x: x*x, row))),\
+				positions)
+			return np.histogram(distances, bins=bins)
+		else:
+			return positions
+
 if __name__ == '__main__':
 	fileConfig("./logging.conf")
 	l = logging.getLogger()
@@ -395,7 +417,7 @@ if __name__ == '__main__':
 	host0, snap0 = int(sys.argv[1]), int(sys.argv[2])
 	reader = HBTReader("./data/")
 
-	print reader.LoadHostHalos(snap0, selection=host0)
+	print reader.GetHostProfile(host0, snap0, bins=np.logspace(-2.5, 0.0, 32))
 
 	# # density profile
 	# subs = reader.GetSubsOfHost(host0, snap0)
