@@ -397,7 +397,7 @@ if __name__ == '__main__':
 
 	print reader.LoadHostHalos(snap0, selection=host0)
 
-	# # animation
+	# # density profile
 	# subs = reader.GetSubsOfHost(host0, snap0)
 	# track = subs[subs['Rank'] == 0][0]['TrackId']
 	# print reader.GetProfile(track, snap0)[0]
