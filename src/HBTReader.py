@@ -90,14 +90,17 @@ class HBTReader:
 		Arguments:
 			isnap (int): snapshot of the file
 			ifile (int): (default=0) index for sub-snapshots
-			filetype (str): (default='Sub') usually 'Src' or 'Sub'
+			filetype (str): (default='Sub') 'Src', 'Sub' or 'HaloSize'
 		"""
 		if isnap<0:
 			isnap=self.MaxSnap+1+isnap
 		if self.nfiles:
 			return self.rootdir+'/%03d/'%isnap+filetype+'Snap_%03d.%d.hdf5'%(isnap, ifile)
 		else:
-			return self.rootdir+'/'+filetype+'Snap_%03d.hdf5'%(isnap)
+			if filetype == 'HaloSize':
+				return "%s/%s/%s_%d.hdf5"%(self.rootdir, filetype, filetype, isnap)
+			else:
+				return self.rootdir+'/'+filetype+'Snap_%03d.hdf5'%(isnap)
 
 	def Open(self, isnap, ifile=0, filetype='Sub', mode='r'):
 		"""Returns opened HDF5 file handle"""
@@ -143,6 +146,7 @@ class HBTReader:
 				the field names or a single subhalo index
 			show_progress (bool): (default = False)
 		"""""
+
 		subhalos=[]
 		offset=0
 		trans_index=False
@@ -150,7 +154,6 @@ class HBTReader:
 			selection=np.s_[:]
 		else:
 			trans_index=isinstance(selection, numbers.Integral)
-
 		if type(selection) is list:
 			selection=tuple(selection)
 
@@ -158,7 +161,8 @@ class HBTReader:
 			if show_progress:
 				sys.stdout.write(".")
 				sys.stdout.flush()
-			with h5py.File(self.GetFileName(isnap, i), 'r') as subfile:
+			# with h5py.File(self.GetFileName(isnap, i), 'r') as subfile:
+			with self.Open(isnap, i) as subfile:
 				nsub=subfile['Subhalos'].shape[0]
 				if nsub==0:
 					continue
@@ -169,6 +173,7 @@ class HBTReader:
 					offset+=nsub
 				else:
 					subhalos.append(subfile['Subhalos'][selection])
+
 		if len(subhalos):		
 			subhalos=np.hstack(subhalos)
 		else:
@@ -176,6 +181,7 @@ class HBTReader:
 		if show_progress:
 			print ""
 		# subhalos.sort(order=['HostHaloId','Nbound'])
+
 		return subhalos
 
 	def GetNumberOfSubhalos(self, isnap=-1):
@@ -285,12 +291,54 @@ class HBTReader:
 		return NewPart
 
 	def GetProfile(self, TrackId, isnap=-1):
-		"""Returns particle positions, binned as given in Ludlow+2016"""
+		"""Returns normalised, binned particle positions of a subhalo"""
 		subhalo = self.GetSub(TrackId, isnap)
 		positions = (self.GetParticleProperties(TrackId, isnap)['ComovingPosition']\
-			- subhalo['ComovingAveragePosition'][0]) / subhalo['BoundR200CritComoving']
-		distances = map(lambda row: np.sqrt(np.sum(map(lambda x: x*x, row))), positions)
+			- subhalo['ComovingAveragePosition'][0])\
+			/ subhalo['BoundR200CritComoving']
+		distances = map(lambda row: np.sqrt(np.sum(map(lambda x: x*x, row))),\
+			positions)
 		return np.histogram(distances, bins=np.logspace(-2.5, 0.0, 32))
+
+	def LoadHostHalos(self, isnap=-1, selection=None):
+		"""Returns spatial properties of FoF groups for a snapshot"""
+
+		hosthalos = []
+		offset = 0
+		trans_index = False
+		if selection is None:
+			selection = np.s_[:]
+		else:
+			trans_index = isinstance(selection, numbers.Integral)
+		if type(selection) is list:
+			selection = tuple(selection)
+
+		with self.Open(isnap, filetype="HaloSize") as hostfile:
+			nsub = hostfile['HostHalos'].shape[0]
+			if trans_index:
+				if offset + nsub > selection:
+					try:
+						hosthalos.append(hostfile['HostHalos'][selection - offset])
+					except ValueError:
+						pass
+				offset += nsub
+			else:
+				try:
+					hosthalos.append(hostfile['HostHalos'][selection])
+				except ValueError:
+					pass
+
+		if len(hosthalos):		
+			hosthalos = np.hstack(hosthalos)
+		else:
+			hosthalos = np.array(hosthalos)
+
+		return hosthalos
+
+	def GetHaloSize(self, HostHaloId, isnap=-1):
+		"""Returns spatial information of a specific FoF group"""
+		HostHalos = self.LoadHostHalos(isnap)
+		return HostHalos[HostHalos['HaloId'] == HostHalos]
 
 	def GetSubsOfHost(self, HostHaloId, isnap=-1):
 		"""Loads all subhaloes belonging to a host halo
@@ -301,7 +349,7 @@ class HBTReader:
 			HostHaloId (int): row number
 			isnap (int): (default = -1)
 		"""
-		with h5py.File(self.GetFileName(isnap), 'r') as subfile:
+		with self.Open(isnap) as subfile:
 			trackIds = subfile['Membership/GroupedTrackIds'][HostHaloId]
 		return np.hstack([self.GetSub(trackId, isnap) for trackId in trackIds])
 
@@ -347,10 +395,14 @@ if __name__ == '__main__':
 	host0, snap0 = int(sys.argv[1]), int(sys.argv[2])
 	reader = HBTReader("./data/")
 
-	subs = reader.GetSubsOfHost(host0, snap0)
-	track = subs[subs['Rank'] == 0][0]['TrackId']
-	print reader.GetProfile(track, snap0)
+	print reader.LoadHostHalos(snap0, selection=host0)
 
+	# # animation
+	# subs = reader.GetSubsOfHost(host0, snap0)
+	# track = subs[subs['Rank'] == 0][0]['TrackId']
+	# print reader.GetProfile(track, snap0)[0]
+
+	# Dot graph
 	# with open("./output/hbt.dot", 'w') as f:
 	# 	f.write("digraph {\n")
 	# 	reader.GetMergerTree(f, l, [host0,], reader.GetSubsOfHost(host0, snap0)['TrackId'], snap0)
