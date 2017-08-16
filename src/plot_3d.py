@@ -33,7 +33,7 @@ ax = fig.add_subplot(1, 2, 2)
 ax.set_xlabel("r")
 ax.set_ylabel("differential mass")
 ax.set_xlim([-2.75, 0.25])
-ax.set_ylim([-4.0, 0.0])
+ax.set_ylim([-4.1, 0.1])
 
 prof, edges = reader.GetHostProfile(hostId, snap, bins=np.logspace(-2.5, 0.0, 32))
 prof = np.array(prof, dtype=np.float32)
