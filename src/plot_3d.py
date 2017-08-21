@@ -39,9 +39,9 @@ prof, edges = reader.GetHostProfile(hostId, snap, bins=np.logspace(-2.5, 0.0, 32
 prof = np.array(prof, dtype=np.float32)
 prof = np.cumsum(prof)
 prof = np.log10(np.divide(prof, prof[-1]))
-midpoints = 0.5*(np.log10(edges)[1:] + np.log10(edges)[:-1])
+# midpoints = 0.5*(np.log10(edges)[1:] + np.log10(edges)[:-1])
 
-ax.plot(midpoints, prof)
+ax.plot(edges[1:], prof)
 
 plt.tight_layout()
 fig.savefig("./plots/profile_%d/%03d.png"%(hostId,snap))
