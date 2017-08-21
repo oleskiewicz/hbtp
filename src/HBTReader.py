@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 import numpy as np
+import pandas as pd
 import h5py
 import sys
 import os.path, glob
 from numpy.lib.recfunctions import append_fields
 from matplotlib.pylab import find
 import numbers
-import logging
-from logging.config import fileConfig
 
 def PeriodicDistance(x,y, BoxSize, axis=-1):
 	d=x-y
@@ -338,10 +337,17 @@ class HBTReader:
 		Arguments:
 			HostHaloId (int): row number
 			isnap (int): (default = -1)
+		Returns:
+			array of ``TrackIds`` (or empty array if FoF is empty)
 		"""
 		with self.Open(isnap) as subfile:
 			trackIds = subfile['Membership/GroupedTrackIds'][HostHaloId]
-		return np.hstack([self.GetSub(trackId, isnap) for trackId in trackIds])
+
+		try:
+			result = np.hstack([self.GetSub(trackId, isnap) for trackId in trackIds])
+		except ValueError:
+			result = []
+		return result
 
 	def GetMergerTree(self, file, log, HostHaloIds, KnownTracks, isnap=-1):
 		"""Builds a FOF merger tree starting at a host halo ID
@@ -380,7 +386,7 @@ class HBTReader:
 
 	def GetProfile(self, TrackId, isnap=-1, bins=None):
 		"""Returns normalised, binned particle positions of a subhalo"""
-
+		result = []
 		subhalo = self.GetSub(TrackId, isnap)
 		positions = (self.GetParticleProperties(TrackId, isnap)['ComovingPosition']\
 			- subhalo['ComovingAveragePosition'][0])\
@@ -389,35 +395,49 @@ class HBTReader:
 		if bins is not None:
 			distances = map(lambda row: np.sqrt(np.sum(map(lambda x: x*x, row))),\
 				positions)
-			return np.histogram(distances, bins=bins)
+			result = np.histogram(distances, bins=bins)
 		else:
-			return positions
+			result = positions
+
+		return result
 
 	def GetHostProfile(self, HostHaloId, isnap=-1, bins=None):
 		"""Returns normalised, binned particle positions of a FoF group"""
+		result = []
 
-		hosthalo = self.LoadHostHalos(isnap, selection=HostHaloId)
-		subhalos = self.GetSubsOfHost(HostHaloId, isnap)['TrackId']
-		positions = [((particle - hosthalo['CenterComoving'])\
-			/ hosthalo['R200CritComoving'])[0]\
-			for subhalo in subhalos for particle in\
-			self.GetParticleProperties(subhalo, isnap)['ComovingPosition']]
+		try:
+			subhalos = self.GetSubsOfHost(HostHaloId, isnap)['TrackId']
+			hosthalo = self.LoadHostHalos(isnap, selection=HostHaloId)
+			positions = [((particle - hosthalo['CenterComoving'])\
+				/ hosthalo['R200CritComoving'])[0]\
+				for subhalo in subhalos for particle in\
+				self.GetParticleProperties(subhalo, isnap)['ComovingPosition']]
 
-		if bins is not None:
-			distances = map(lambda row: np.sqrt(np.sum(map(lambda x: x*x, row))),\
-				positions)
-			return np.histogram(distances, bins=bins)
-		else:
-			return positions
+			if bins is not None:
+				distances = map(lambda row: np.sqrt(np.sum(map(lambda x: x*x, row))),\
+					positions)
+				result = np.histogram(distances, bins=bins)
+			else:
+				result = positions
+		except TypeError:
+			result = []
+
+		return result
 
 if __name__ == '__main__':
-	fileConfig("./logging.conf")
-	l = logging.getLogger()
-
-	host0, snap0 = int(sys.argv[1]), int(sys.argv[2])
+	snap = int(sys.argv[1])
+	nbins = 33
+	bins = np.logspace(-2.5, 0.0, nbins)
 	reader = HBTReader("./data/")
 
-	print reader.GetHostProfile(host0, snap0, bins=np.logspace(-2.5, 0.0, 32))
+	hosts = filter(lambda h: len(reader.GetSubsOfHost(h, snap)) > 0,\
+		reader.LoadHostHalos(isnap=snap)['HaloId'])[0:10]
+
+	profs = pd.DataFrame(map(lambda h: reader.GetHostProfile(h, snap, bins=bins)[0],\
+		hosts), columns=np.arange(1,nbins), index=hosts)
+	print profs
+
+	# profs.to_csv("./prof-gr023.tsv", sep="\t", index_label="id")
 
 	# # density profile
 	# subs = reader.GetSubsOfHost(host0, snap0)
