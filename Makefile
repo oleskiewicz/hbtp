@@ -20,9 +20,8 @@ docs:
 	python $< $(word 2,$^) $@
 
 ./plots/profile_1/all.mp4: ./src/plot_3d.py
-	for isnap in `seq 11 122`; do python $< 1 $$isnap; done
+	for isnap in `seq 122 -1 11`; do python $< 1 $$isnap; done
 	ffmpeg -pattern_type glob -i "./plots/profile_1/*.png" $@
-	rm "./plots/profile_1*.png"
 
 # only re-run after re-running submit.csh on new set if ids
 ./output/mah.tsv: ./src/forge.py
