@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+import logging
+from logging.config import fileConfig
 import numpy as np
 import pandas as pd
 import h5py
@@ -349,40 +351,41 @@ class HBTReader:
 			result = []
 		return result
 
-	def GetMergerTree(self, file, log, HostHaloIds, KnownTracks, isnap=-1):
+	def GetMergerTree(self, HostHaloId, isnap=-1, file=None):
 		"""Builds a FOF merger tree starting at a host halo ID
 		
 		Prints a Dot-ready digraph.
 
 		Arguments:
-			file (File): ``.dot`` output file 
-			log (logging.Logger): log object
 			HostHaloIds (list): originally a one-element list, recursively called to
 				contain all progenitors at each snapshot
 			isnap (int): (default = -1)
+			file (File): (default=None) if not ``None``, Dot diagram will be generated
+				on the fly
 		"""
-		if len(HostHaloIds) > 0:
-			for HostHaloId in HostHaloIds:
-				subhaloes = self.GetSubsOfHost(HostHaloId, isnap=isnap)
-				try:
-					log.info("{halo: %03d_%d, tracks: %s}"%\
-						(isnap, HostHaloId, str(subhaloes['TrackId'])))
+		progenitors = self.GetHostProgenitors(HostHaloId, isnap)
 
-					previous_hosts = np.unique([self.GetSub(track, isnap=isnap-1)[0]['HostHaloId']\
-						# for track in list(subhaloes['TrackId'])]) # all
-						for track in list(subhaloes['TrackId']) if self.GetSub(track, isnap=isnap-1)[0]['Rank'] == 0]) # no non-central following
-						# for track in list(subhaloes['TrackId']) if track in KnownTracks]) # no new tracks
+		if file is not None:
+			file.write("\t%03d000%d [label=\"%d, %d\"];\n"%\
+				(isnap, HostHaloId, isnap, HostHaloId))
+			for progenitor in progenitors:
+				file.write("\t%03d000%d -> %03d000%d;\n"%\
+					(isnap, HostHaloId, isnap-1, progenitor))
 
-					for PreviousHostHaloId in previous_hosts:
-						file.write("\t%03d000%d -> %03d000%d;\n"%\
-							(isnap, HostHaloId, isnap-1, PreviousHostHaloId))
+		return [HostHaloId, [] if len(progenitors) == 0 else\
+			[self.GetMergerTree(progenitor, isnap-1, file) for progenitor in progenitors]]
 
-					self.GetMergerTree(f, log, previous_hosts, KnownTracks, isnap-1)
-				except:
-					log.info("{halo: %03d_%d, NA}"%(isnap, HostHaloId))
-				finally:
-					file.write("\t%03d000%d [label=\"%d, %d, %d\"];\n"%\
-						(isnap, HostHaloId, isnap, HostHaloId, len(subhaloes)))
+	def GetHostProgenitors(self, HostHaloId, isnap=-1):
+		try:
+			subhaloes = self.GetSubsOfHost(HostHaloId, isnap=isnap)['TrackId']
+			result = np.unique([self.GetSub(subhalo, isnap=isnap-1)[0]['HostHaloId']\
+				# for track in subhaloes]) # all
+				for subhalo in subhaloes if self.GetSub(subhalo, isnap=isnap-1)[0]['Rank'] == 0]) # no non-central following
+				# for track in subhaloes if track in KnownTracks]) # no new tracks
+		except:
+			result = []
+		finally:
+			return result
 
 	def GetProfile(self, TrackId, isnap=-1, bins=None):
 		"""Returns normalised, binned particle positions of a subhalo"""
@@ -424,29 +427,38 @@ class HBTReader:
 
 		return result
 
+def flatten(tree):
+	for node in tree:
+		try:
+			for subnode in flatten(node):
+				yield subnode
+		except:
+			yield node
+
 if __name__ == '__main__':
-	snap = int(sys.argv[1])
+	fileConfig("./logging.conf")
+	log = logging.getLogger()
+
+	host, snap = int(sys.argv[1]), int(sys.argv[2])
 	nbins = 33
 	bins = np.logspace(-2.5, 0.0, nbins)
 	reader = HBTReader("./data/")
 
-	hosts = filter(lambda h: len(reader.GetSubsOfHost(h, snap)) > 0,\
-		reader.LoadHostHalos(isnap=snap)['HaloId'])[0:10]
+	# hosts = filter(lambda h: len(reader.GetSubsOfHost(h, snap)) > 0,\
+	# 	reader.LoadHostHalos(isnap=snap)['HaloId'])[0:10]
 
-	profs = pd.DataFrame(map(lambda h: reader.GetHostProfile(h, snap, bins=bins)[0],\
-		hosts), columns=np.arange(1,nbins), index=hosts)
-	print profs
-
-	# profs.to_csv("./prof-gr023.tsv", sep="\t", index_label="id")
+	# # halo properties
+	# print "snap\tHaloId\tR200CritComoving\tM200Crit"
+	# for host in hosts:
+	# 	print "%d\t%d\t%f\t%f"%(snap, host['HaloId'], host['R200CritComoving'], host['M200Crit'])
 
 	# # density profile
-	# subs = reader.GetSubsOfHost(host0, snap0)
-	# track = subs[subs['Rank'] == 0][0]['TrackId']
-	# print reader.GetProfile(track, snap0)[0]
+	# profs = pd.DataFrame(map(lambda h: reader.GetHostProfile(h, snap, bins=bins)[0],\
+	# 	hosts), columns=np.arange(1,nbins), index=hosts)
+	# profs.to_csv("./output/prof-gr%03d.tsv"%snap, sep="\t", index_label="id")
 
-	# Dot graph
-	# with open("./output/hbt.dot", 'w') as f:
-	# 	f.write("digraph {\n")
-	# 	reader.GetMergerTree(f, l, [host0,], reader.GetSubsOfHost(host0, snap0)['TrackId'], snap0)
-	# 	f.write("}\n")
-
+	# merger tree
+	with open("./output/hbt.dot", 'w') as f:
+		f.write("digraph {\n")
+		t = reader.GetMergerTree(host, snap, f)
+		f.write("}\n")
