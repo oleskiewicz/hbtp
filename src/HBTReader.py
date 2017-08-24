@@ -326,10 +326,9 @@ class HBTReader:
 
 		return hosthalos
 
-	def GetHaloSize(self, HostHaloId, isnap=-1):
+	def GetHostHalo(self, HostHaloId, isnap=-1):
 		"""Returns spatial information of a specific FoF group"""
-		HostHalos = self.LoadHostHalos(isnap)
-		return HostHalos[HostHalos['HaloId'] == HostHalos]
+		return self.LoadHostHalos(isnap, HostHaloId)
 
 	def GetSubsOfHost(self, HostHaloId, isnap=-1):
 		"""Loads all subhaloes belonging to a host halo
@@ -366,11 +365,11 @@ class HBTReader:
 		progenitors = self.GetHostProgenitors(HostHaloId, isnap)
 
 		if file is not None:
-			file.write("\t%03d000%d [label=\"%d, %d\"];\n"%\
-				(isnap, HostHaloId, isnap, HostHaloId))
+			file.write("\t%d [label=\"%d, %.3f\"];\n"%\
+				(10e6*isnap+HostHaloId, 10e6*isnap+HostHaloId, self.GetHostHalo(HostHaloId, isnap)['M200Crit']))
 			for progenitor in progenitors:
-				file.write("\t%03d000%d -> %03d000%d;\n"%\
-					(isnap, HostHaloId, isnap-1, progenitor))
+				file.write("\t%d -> %d;\n"%\
+					(10e6*isnap+HostHaloId, 10e6*(isnap-1)+progenitor))
 
 		return [HostHaloId, [] if len(progenitors) == 0 else\
 			[self.GetMergerTree(progenitor, isnap-1, file) for progenitor in progenitors]]
@@ -426,14 +425,6 @@ class HBTReader:
 			result = []
 
 		return result
-
-def flatten(tree):
-	for node in tree:
-		try:
-			for subnode in flatten(node):
-				yield subnode
-		except:
-			yield node
 
 if __name__ == '__main__':
 	fileConfig("./logging.conf")
