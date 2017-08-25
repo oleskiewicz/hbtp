@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import fcntl
 import logging
 from logging.config import fileConfig
 import numpy as np
@@ -9,6 +10,9 @@ import os.path, glob
 from numpy.lib.recfunctions import append_fields
 from matplotlib.pylab import find
 import numbers
+from itertools import groupby
+
+import tree
 
 def PeriodicDistance(x,y, BoxSize, axis=-1):
 	d=x-y
@@ -328,7 +332,7 @@ class HBTReader:
 
 	def GetHostHalo(self, HostHaloId, isnap=-1):
 		"""Returns spatial information of a specific FoF group"""
-		return self.LoadHostHalos(isnap, HostHaloId)
+		return self.LoadHostHalos(isnap, HostHaloId)[0]
 
 	def GetSubsOfHost(self, HostHaloId, isnap=-1):
 		"""Loads all subhaloes belonging to a host halo
@@ -371,7 +375,7 @@ class HBTReader:
 				file.write("\t%d -> %d;\n"%\
 					(10e9*isnap+HostHaloId, 10e9*(isnap-1)+progenitor))
 
-		return [HostHalo(HostHaloId, isnap), [] if len(progenitors) == 0 else\
+		return [HostHalo(HostHaloId, self, isnap), [] if len(progenitors) == 0 else\
 			[self.GetMergerTree(progenitor, isnap-1, file) for progenitor in progenitors]]
 
 	def GetHostProgenitors(self, HostHaloId, isnap=-1):
@@ -427,28 +431,22 @@ class HBTReader:
 		return result
 
 class HostHalo():
-	def __init__(self, HostHaloId, isnap=-1):
+	def __init__(self, HostHaloId, reader, isnap=-1):
 		self.HostHaloId = HostHaloId
 		self.isnap = isnap
-
+		self.M200Crit = reader.GetHostHalo(HostHaloId, isnap)['M200Crit']
 	def __str__(self):
 		return "%s: %s"%(self.isnap, self.HostHaloId)
-
-def flatten(tree):
-	# # try:
-	# if len(tree[1]) > 0:
-	# 	for node in tree[1]:
-	# 		flatten(node)
-	# print tree[0]
-	# # except:
-	# # 	yield tree[0]
-	for node in tree:
-		try:
-			for subnode in flatten(node):
-				yield subnode
-		except:
-			yield node
-
+	def __eq__(self, other):
+		if isinstance(other, self.__class__):
+			return self.__dict__ == other.__dict__
+		return NotImplemented
+	def __ne__(self, other):
+		if isinstance(other, self.__class__):
+			return not self.__eq__(other)
+		return NotImplemented
+	def __hash__(self):
+		return hash(tuple(sorted(self.__dict__.items())))
 
 if __name__ == '__main__':
 	fileConfig("./logging.conf")
@@ -457,6 +455,7 @@ if __name__ == '__main__':
 	host, snap = int(sys.argv[1]), int(sys.argv[2])
 	nbins = 33
 	bins = np.logspace(-2.5, 0.0, nbins)
+	f0 = 0.1
 	reader = HBTReader("./data/")
 
 	# hosts = filter(lambda h: len(reader.GetSubsOfHost(h, snap)) > 0,\
@@ -464,7 +463,6 @@ if __name__ == '__main__':
 
 	# # halo properties
 	# print "snap\tHaloId\tR200CritComoving\tM200Crit"
-	# for host in hosts:
 	# 	print "%d\t%d\t%f\t%f"%(snap, host['HaloId'], host['R200CritComoving'], host['M200Crit'])
 
 	# # density profile
@@ -472,10 +470,25 @@ if __name__ == '__main__':
 	# 	hosts), columns=np.arange(1,nbins), index=hosts)
 	# profs.to_csv("./output/prof-gr%03d.tsv"%snap, sep="\t", index_label="id")
 
-	# merger tree
-	with open("./output/hbt.dot", 'w') as f:
-		f.write("digraph {\n")
-		t = reader.GetMergerTree(host, snap, f)
-		f.write("}\n")
-	
-	print map(lambda h: str(h), flatten(t))
+	# # merger tree
+	# with open("./output/mt.dot", 'w') as f:
+	# 	f.write("digraph {\n")
+	# 	t = reader.GetMergerTree(host, snap, f)
+	# 	f.write("}\n")
+
+	# # CMH
+	# m0 = reader.GetHostHalo(host, snap)['M200Crit']
+	# m = {}
+	# for k,vs in groupby(map(lambda h: vars(h), tree.flatten(t)), key=lambda h: h['isnap']):
+	# 	ms = sum(filter(lambda mass: mass > f0*m0, map(lambda h: h['M200Crit'], vs)))
+	# 	try:
+	# 		m[k] += ms
+	# 	except:
+	# 		m[k] = ms
+	# with open("./output/cmh.tsv", 'a') as f:
+	# 	fcntl.flock(f, fcntl.LOCK_EX)
+	# 	f.write("HostHaloId\tsnap0\tsnap\tM200\n")
+	# 	for k in m:
+	# 		f.write("%d\t%03d\t%03d\t%f\n"%(host, snap, k, m[k]))
+	# 	fcntl.flock(f, fcntl.LOCK_UN)
+
