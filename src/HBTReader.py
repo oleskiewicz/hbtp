@@ -366,12 +366,12 @@ class HBTReader:
 
 		if file is not None:
 			file.write("\t%d [label=\"%d, %.3f\"];\n"%\
-				(10e6*isnap+HostHaloId, 10e6*isnap+HostHaloId, self.GetHostHalo(HostHaloId, isnap)['M200Crit']))
+				(10e9*isnap+HostHaloId, 10e9*isnap+HostHaloId, self.GetHostHalo(HostHaloId, isnap)['M200Crit']))
 			for progenitor in progenitors:
 				file.write("\t%d -> %d;\n"%\
-					(10e6*isnap+HostHaloId, 10e6*(isnap-1)+progenitor))
+					(10e9*isnap+HostHaloId, 10e9*(isnap-1)+progenitor))
 
-		return [HostHaloId, [] if len(progenitors) == 0 else\
+		return [HostHalo(HostHaloId, isnap), [] if len(progenitors) == 0 else\
 			[self.GetMergerTree(progenitor, isnap-1, file) for progenitor in progenitors]]
 
 	def GetHostProgenitors(self, HostHaloId, isnap=-1):
@@ -426,6 +426,30 @@ class HBTReader:
 
 		return result
 
+class HostHalo():
+	def __init__(self, HostHaloId, isnap=-1):
+		self.HostHaloId = HostHaloId
+		self.isnap = isnap
+
+	def __str__(self):
+		return "%s: %s"%(self.isnap, self.HostHaloId)
+
+def flatten(tree):
+	# # try:
+	# if len(tree[1]) > 0:
+	# 	for node in tree[1]:
+	# 		flatten(node)
+	# print tree[0]
+	# # except:
+	# # 	yield tree[0]
+	for node in tree:
+		try:
+			for subnode in flatten(node):
+				yield subnode
+		except:
+			yield node
+
+
 if __name__ == '__main__':
 	fileConfig("./logging.conf")
 	log = logging.getLogger()
@@ -453,3 +477,5 @@ if __name__ == '__main__':
 		f.write("digraph {\n")
 		t = reader.GetMergerTree(host, snap, f)
 		f.write("}\n")
+	
+	print map(lambda h: str(h), flatten(t))
