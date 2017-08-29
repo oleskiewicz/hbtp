@@ -1,15 +1,11 @@
 #!/usr/bin/env python
 import sys
-import os.path
-import glob
 import numbers
 import numpy as np
 import h5py
 import pandas as pd
 from numpy.lib.recfunctions import append_fields
 from matplotlib.pylab import find
-import logging
-from logging.config import fileConfig
 
 def PeriodicDistance(x,y, BoxSize, axis=-1):
 	d=x-y
@@ -444,28 +440,4 @@ class HostHalo():
 		return NotImplemented
 	def __hash__(self):
 		return hash(tuple(sorted(self.__dict__.items())))
-
-if __name__ == '__main__':
-	pass
-	# # merger tree
-	# with open("./output/mt.dot", 'w') as f:
-	# 	f.write("digraph {\n")
-	# 	t = reader.GetMergerTree(host, snap, f)
-	# 	f.write("}\n")
-
-	# # CMH
-	# m0 = reader.GetHostHalo(host, snap)['M200Crit']
-	# m = {}
-	# for k,vs in groupby(map(lambda h: vars(h), util.flatten(t)), key=lambda h: h['isnap']):
-	# 	ms = sum(filter(lambda mass: mass > f0*m0, map(lambda h: h['M200Crit'], vs)))
-	# 	try:
-	# 		m[k] += ms
-	# 	except:
-	# 		m[k] = ms
-	# with open("./output/cmh.tsv", 'a') as f:
-	# 	fcntl.flock(f, fcntl.LOCK_EX)
-	# 	f.write("HostHaloId\tsnap0\tsnap\tM200\n")
-	# 	for k in m:
-	# 		f.write("%d\t%03d\t%03d\t%f\n"%(host, snap, k, m[k]))
-	# 	fcntl.flock(f, fcntl.LOCK_UN)
 
