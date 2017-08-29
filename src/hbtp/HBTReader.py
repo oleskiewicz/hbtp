@@ -1,18 +1,15 @@
 #!/usr/bin/env python
-import fcntl
-import logging
-from logging.config import fileConfig
-import numpy as np
-import pandas as pd
-import h5py
 import sys
-import os.path, glob
+import os.path
+import glob
+import numbers
+import numpy as np
+import h5py
+import pandas as pd
 from numpy.lib.recfunctions import append_fields
 from matplotlib.pylab import find
-import numbers
-from itertools import groupby
-
-import tree
+import logging
+from logging.config import fileConfig
 
 def PeriodicDistance(x,y, BoxSize, axis=-1):
 	d=x-y
@@ -119,7 +116,7 @@ class HBTReader:
 		"""
 		nests=[]
 		for i in xrange(max(self.nfiles,1)):
-			with h5py.File(self.GetFileName(isnap, i), 'r') as subfile:
+			with self.Open(isnap, i) as subfile:
 				nests.extend(subfile['NestedSubhalos'][...])
 		return np.array(nests)
 
@@ -449,27 +446,7 @@ class HostHalo():
 		return hash(tuple(sorted(self.__dict__.items())))
 
 if __name__ == '__main__':
-	fileConfig("./logging.conf")
-	log = logging.getLogger()
-
-	host, snap = int(sys.argv[1]), int(sys.argv[2])
-	nbins = 33
-	bins = np.logspace(-2.5, 0.0, nbins)
-	f0 = 0.1
-	reader = HBTReader("./data/")
-
-	# hosts = filter(lambda h: len(reader.GetSubsOfHost(h, snap)) > 0,\
-	# 	reader.LoadHostHalos(isnap=snap)['HaloId'])[0:10]
-
-	# # halo properties
-	# print "snap\tHaloId\tR200CritComoving\tM200Crit"
-	# 	print "%d\t%d\t%f\t%f"%(snap, host['HaloId'], host['R200CritComoving'], host['M200Crit'])
-
-	# # density profile
-	# profs = pd.DataFrame(map(lambda h: reader.GetHostProfile(h, snap, bins=bins)[0],\
-	# 	hosts), columns=np.arange(1,nbins), index=hosts)
-	# profs.to_csv("./output/prof-gr%03d.tsv"%snap, sep="\t", index_label="id")
-
+	pass
 	# # merger tree
 	# with open("./output/mt.dot", 'w') as f:
 	# 	f.write("digraph {\n")
@@ -479,7 +456,7 @@ if __name__ == '__main__':
 	# # CMH
 	# m0 = reader.GetHostHalo(host, snap)['M200Crit']
 	# m = {}
-	# for k,vs in groupby(map(lambda h: vars(h), tree.flatten(t)), key=lambda h: h['isnap']):
+	# for k,vs in groupby(map(lambda h: vars(h), util.flatten(t)), key=lambda h: h['isnap']):
 	# 	ms = sum(filter(lambda mass: mass > f0*m0, map(lambda h: h['M200Crit'], vs)))
 	# 	try:
 	# 		m[k] += ms
