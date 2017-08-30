@@ -1,11 +1,17 @@
 #!/usr/bin/env python
 import sys
+import glob
 import numbers
 import numpy as np
 import h5py
 import pandas as pd
 from numpy.lib.recfunctions import append_fields
 from matplotlib.pylab import find
+
+import logging
+from logging.config import fileConfig
+fileConfig("./log.conf")
+log = logging.getLogger()
 
 def PeriodicDistance(x,y, BoxSize, axis=-1):
 	d=x-y

@@ -5,6 +5,11 @@ import numpy as np
 # from read import ID, DESC, SNAP, MASS, HOST, DESC_HOST, MAIN_PROG
 import read
 
+import logging
+from logging.config import fileConfig
+fileConfig("./log.conf")
+log = logging.getLogger()
+
 def get(h, d):
 	"""Returns halo (row of data) given a ``nodeIndex``
 	
@@ -39,8 +44,9 @@ def progenitors(h, d):
 	- keep unique ones
 	"""
 	h = get(h, d)
-	# return np.unique(d[np.where(d[:,DESC_HOST] == h[ID])][:,HOST])
-	return np.unique([host(prog, d) for prog in d[d['descendantHost'] == h['nodeIndex']]])
+	ps = filter(lambda h: h is not None, np.unique([host(prog, d) for prog in\
+		d[d['descendantHost'] == h['nodeIndex']]]))
+	return ps
 
 def host(h, d):
 	"""Finds host of ``h``

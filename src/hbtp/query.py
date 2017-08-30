@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 import sys
 import numpy as np
-import logging
-from logging.config import fileConfig
 
 from HBTReader import HBTReader
 
-if __name__ == '__main__':
-	fileConfig("./logging.conf")
-	log = logging.getLogger()
+import logging
+from logging.config import fileConfig
+fileConfig("./log.conf")
+log = logging.getLogger()
 
+if __name__ == '__main__':
 	snap = int(sys.argv[1])
 	reader = HBTReader("./data/")
 

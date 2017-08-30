@@ -2,15 +2,15 @@
 import sys
 import numpy as np
 import pandas as pd
+
 import logging
 from logging.config import fileConfig
+fileConfig("./log.conf")
+log = logging.getLogger()
 
 from HBTReader import HBTReader
 
 if __name__ == '__main__':
-	fileConfig("./logging.conf")
-	log = logging.getLogger()
-
 	snap = int(sys.argv[1])
 	nbins = 33
 	bins = np.logspace(-2.5, 0.0, nbins)

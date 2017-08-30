@@ -1,11 +1,14 @@
 #!/usr/bin/env python
 import sys
-import logging
-from logging.config import fileConfig
 import numpy as np
 
 # from read import ID, DESC, SNAP, MASS, HOST, DESC_HOST, MAIN_PROG, columns
 import halo
+
+import logging
+from logging.config import fileConfig
+fileConfig("./log.conf")
+log = logging.getLogger()
 
 def node(h, m, m0, nfw_f):
 	return "\t%d [label=\"%s (%d, %d, %d)\", style=filled, fillcolor=%s];\n"%(\

@@ -1,15 +1,18 @@
 #!/usr/bin/env python
 import sys
 import fcntl
-import logging
-from logging.config import fileConfig
 import numpy as np
 
 import read
 import halo
 import dot
 
-def build(log, id, data):
+import logging
+from logging.config import fileConfig
+fileConfig("./log.conf")
+log = logging.getLogger()
+
+def build(id, data):
 	"""Generates merger tree from data
 
 	Recursively calls itself inside the return statement, generating a merger tree
@@ -27,7 +30,6 @@ def build(log, id, data):
 			6
 
 	Arguments:
-		log (logging.Logger): log handling object
 		id (int): ``nodeIndex`` of the starting halo
 		data (numpy.ndarray): dataset provided by :mod:`src.read` module
 	Returns:
@@ -37,8 +39,10 @@ def build(log, id, data):
 
 	h = halo.get(id, data)
 	progenitors = halo.progenitors(h, data)
+	log.debug("Reached halo %d with %d progenitor(s)"\
+		%(h["nodeIndex"], len(progenitors)))
 	return [h['nodeIndex'], [] if len(progenitors) == 0 else \
-		[build(log, progenitor, data) for progenitor in progenitors]]
+		[build(progenitor, data) for progenitor in progenitors]]
 
 def flatten(tree):
 	"""Finds all ``nodeIndex`` values belonging to a given merger tree
@@ -83,44 +87,42 @@ def mah(tree, progs, data, m0, nfw_f):
 	return np.array(mah)
 
 if __name__ == '__main__':
-	fileConfig("./logging.conf")
-	log = logging.getLogger()
-
 	# # array submission
 	# with open("./output/ids.txt") as file_ids:
 	# 	for i, line in enumerate(file_ids):
 	# 		if i == int(sys.argv[1])-1:
 	# 			root = int(line)
 	# single-job submission
-	root = int(sys.argv[1])
-	file_out = sys.argv[2]
+	file_numpy = sys.argv[1]
+	root = int(sys.argv[2])
+	file_csv = sys.argv[3]
 
-	d = read.retrieve()
+	d = read.retrieve(file_numpy)
 	h = halo.get(root, d)
 
 	nfw_f = 0.01
 	m0 = halo.mass(h, d)
 	log.info("Found halo %d of mass %d at snapshot %d"%(root, m0, h['snapshotNumber']))
 
-	t = build(log, h, d)
+	t = build(h, d)
 	p = np.array([halo.get(id, d) for id in list(flatten(t))])
 	m = mah(t, p, d, m0, nfw_f)
-	log.info("Built a tree rooted at halo %d with %d progenitors"%(root, np.shape(p)[0]))
+	log.info("Built a tree rooted at halo %d with %d children"%(root, p.shape[0]))
 
-	with open(file_out, 'a') as file_tsv:
-		fcntl.flock(file_tsv, fcntl.LOCK_EX)
-		log.info("Locked %s"%(file_out))
+	with open(file_csv, 'a') as file_csv:
+		fcntl.flock(file_csv, fcntl.LOCK_EX)
+		log.info("Locked %s"%(file_csv.name))
 		for row in m:
-			file_tsv.write("%d\t%02d\t%d\n"%(row[0], row[1], row[2]))
-		fcntl.flock(file_tsv, fcntl.LOCK_UN)
-		log.info("Appended MAH of %d to %s, unlocking file"%(root, file_out))
+			file_csv.write("%d,%02d,%d\n"%(row[0], row[1], row[2]))
+		fcntl.flock(file_csv, fcntl.LOCK_UN)
+		log.info("Appended MAH of %d to %s, unlocking file"%(root, file_csv.name))
 
-	with open("./output/mah_%d.dot"%(root), 'w') as file_dot:
-		file_dot.write("digraph merger_tree { rankdir=BT;\n")
-		dot.tree(file_dot, t, d, m0, nfw_f)
-		file_dot.write("\tsubgraph snapshots {\n")
-		dot.mah(file_dot, m, p)
-		file_dot.write("\t}\n")
-		file_dot.write("}\n")
-		log.info("Wrote Dot graph to ./output/mah_%d.dot"%(root))
+	# with open("./test.dot", 'w') as file_dot:
+	# 	file_dot.write("digraph merger_tree { rankdir=BT;\n")
+	# 	dot.tree(file_dot, t, d, m0, nfw_f)
+	# 	file_dot.write("\tsubgraph snapshots {\n")
+	# 	dot.mah(file_dot, m, p)
+	# 	file_dot.write("\t}\n")
+	# 	file_dot.write("}\n")
+	# 	log.info("Wrote Dot graph to %s"%(file_dot.name))
 

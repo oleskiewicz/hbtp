@@ -1,8 +1,8 @@
 SRC:=./src/hbtp
 OUT:=./output/hbtp
-SNAP:=023
+SNAP:=122
 # IDS:=$(shell more $(OUT)/ids_$(SNAP).txt)
-IDS:=0 1 2 3 4 5 6 7
+IDS:=114532 114536 114537 114538 114540 114542 114547 114548 114550 114556
 
 ids: $(OUT)/ids_$(SNAP).txt
 props: $(foreach ID,$(IDS),$(OUT)/prop_$(SNAP).csv)
