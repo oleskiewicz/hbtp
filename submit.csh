@@ -51,5 +51,5 @@ foreach id (`more ./output/hbtp/ids_023.txt`)
 			 -J "cmh_${snap}_${id}" \
 			 -oo ./log/log_%J.txt \
 			 -eo ./log/err_%J.txt \
-			 make -f hbtp.mk ./output/hbtp/cmh_${snap}_${id}.csv
+			 make -f ./src/hbtp/makefile ./output/hbtp/cmh_${snap}_${id}.csv
 end
