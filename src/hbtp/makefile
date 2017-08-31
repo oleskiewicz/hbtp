@@ -1,8 +1,8 @@
 SRC:=./src/hbtp
 OUT:=./output/hbtp
-SNAP:=122
+SNAP:=051
 # IDS:=$(shell more $(OUT)/ids_$(SNAP).txt)
-IDS:=114532 114536 114537 114538 114540 114542 114547 114548 114550 114556
+IDS:=0 1 2 3 4 5 6 7 8 9
 
 ids: $(OUT)/ids_$(SNAP).txt
 props: $(foreach ID,$(IDS),$(OUT)/prop_$(SNAP).csv)
@@ -22,7 +22,7 @@ $(OUT)/prop_$(SNAP).csv: $(SRC)/prop.py ids
 ./plots/mt_$(SNAP)_%.pdf: $(OUT)/mt_$(SNAP)_%.dot
 	dot -Tpdf -o $@ $<
 
-$(OUT)/cmh_$(SNAP)_%.csv $(OUT)/mt_$(SNAP)_%.dot: $(SRC)/cmh.py ids
+$(OUT)/cmh_$(SNAP)_%.csv: $(SRC)/cmh.py
 	python -m $(patsubst %.py,%,$(subst /,.,$<)) $(SNAP) $* 
 
 $(OUT)/cmh_$(SNAP).csv: $(SRC)/forge.py

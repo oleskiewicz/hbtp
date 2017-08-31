@@ -43,13 +43,13 @@
 ################################################################################
 # HBT+ -- merger trees                                                         #
 ################################################################################
-set snap = 122
-foreach id (`more ./output/hbtp/ids_023.txt`)
+set snap = 051
+foreach id (`more "./output/hbtp/ids_${snap}.txt"`)
 	bsub -P durham \
 			 -n 1 \
 			 -q cordelia \
 			 -J "cmh_${snap}_${id}" \
 			 -oo ./log/log_%J.txt \
 			 -eo ./log/err_%J.txt \
-			 make -f ./src/hbtp/makefile ./output/hbtp/cmh_${snap}_${id}.csv
+			 python -m src.hbtp.cmh ${snap} ${id}
 end

@@ -8,6 +8,8 @@ import pandas as pd
 from numpy.lib.recfunctions import append_fields
 from matplotlib.pylab import find
 
+from .. import util
+
 import logging
 from logging.config import fileConfig
 fileConfig("./log.conf")
@@ -359,31 +361,73 @@ class HBTReader:
 		Prints a Dot-ready digraph.
 
 		Arguments:
-			HostHaloIds (list): originally a one-element list, recursively called to
-				contain all progenitors at each snapshot
+			HostHaloId (int): a halo at which to root a tree
 			isnap (int): (default = -1)
 			file (File): (default=None) if not ``None``, Dot diagram will be generated
 				on the fly
+		Returns:
+			(list): multiply embedded list with a tree, i.e. ``[1, [2, 3]]``
 		"""
 		progenitors = self.GetHostProgenitors(HostHaloId, isnap)
 
+		log.debug("Halo %d at %d with %d progenitor(s)"\
+			%(HostHaloId, isnap, len(progenitors)))
+
 		if file is not None:
-			file.write("\t%d [label=\"%d, %.3f\"];\n"%\
-				(10e9*isnap+HostHaloId, 10e9*isnap+HostHaloId, self.GetHostHalo(HostHaloId, isnap)['M200Crit']))
+			file.write("\t\"%d_%d\" [label=\"%d, %d, %.3f\"];\n"%\
+				(isnap, HostHaloId, isnap, HostHaloId, self.GetHostHalo(HostHaloId, isnap)['M200Crit']))
 			for progenitor in progenitors:
-				file.write("\t%d -> %d;\n"%\
-					(10e9*isnap+HostHaloId, 10e9*(isnap-1)+progenitor))
+				file.write("\t\"%d_%d\" -> \"%d_%d\";\n"%\
+					(isnap, HostHaloId, isnap-1, progenitor))
 
 		return [HostHalo(HostHaloId, self, isnap), [] if len(progenitors) == 0 else\
 			[self.GetMergerTree(progenitor, isnap-1, file) for progenitor in progenitors]]
+
+	def GetCollapsedMassHistory(self, HostHaloId, isnap=-1, f=0.01):
+		"""Calculates a CMH, starting at a FOF group
+		
+		CMH is a sum of masses of all progenitors over a threshold
+
+		Arguments:
+			HostHaloIds (list): originally a one-element list, recursively called to
+				contain all progenitors at each snapshot
+			isnap (int): (default = -1) initial snapshot
+			f (float): (default = 0.01) NFW :math:`f` parameter
+		"""
+
+		m0 = self.GetHostHalo(HostHaloId, isnap)['M200Crit']
+		cmh = [m0,]
+		HostHaloes = [HostHaloId,]
+
+		snap = isnap
+		while len(HostHaloes) > 0:
+			get_progs = np.vectorize(lambda host:\
+				self.GetHostProgenitors(host, snap), otypes=[np.ndarray])
+			get_mass = np.vectorize(lambda host:\
+				self.GetHostHalo(host, snap-1)['M200Crit'], otypes=[np.ndarray])
+
+			progenitors = list(util.flatten(get_progs(HostHaloes)))
+			if len(progenitors) > 0:
+				ms = get_mass(progenitors)
+				cmh.append(np.sum(ms[ms > f*m0], dtype=np.float32))
+
+			log.debug("Snap %03d, %d halo(es), %d progenitor(s)"\
+				%(snap, len(HostHaloes), len(progenitors)))
+
+			HostHaloes = progenitors
+			snap = snap - 1
+
+		log.debug("Snap %03d, finished"%(snap))
+
+		return cmh
 
 	def GetHostProgenitors(self, HostHaloId, isnap=-1):
 		try:
 			subhaloes = self.GetSubsOfHost(HostHaloId, isnap=isnap)['TrackId']
 			result = np.unique([self.GetSub(subhalo, isnap=isnap-1)[0]['HostHaloId']\
-				# for track in subhaloes]) # all
+				# for subhalo in subhaloes]) # all
 				for subhalo in subhaloes if self.GetSub(subhalo, isnap=isnap-1)[0]['Rank'] == 0]) # no non-central following
-				# for track in subhaloes if track in KnownTracks]) # no new tracks
+				# for subhalo in subhaloes if track in KnownTracks]) # no new tracks
 		except:
 			result = []
 		finally:
