@@ -51,15 +51,26 @@ set snap = 051
 #      -eo ./log/err_%J.txt \
 #      python -m src.hbtp.prof ${snap}
 
-################################################################################
-# HBT+ -- merger trees                                                         #
-################################################################################
-foreach id (`more "./output/hbtp/ids.txt"`)
-	bsub -P durham \
-			 -n 1 \
-			 -q cordelia \
-			 -J "cmh_${snap}_${id}" \
-			 -oo ./log/log_%J.txt \
-			 -eo ./log/err_%J.txt \
-			 python -m src.hbtp.cmh ${snap} ${id}
-end
+# ################################################################################
+# # HBT+ -- combine CMHs                                                         #
+# ################################################################################
+# bsub -P durham \
+#      -n 1 \
+#      -q cordelia \
+#      -J "cmhs_$snap" \
+#      -oo ./log/log_%J.txt \
+#      -eo ./log/err_%J.txt \
+#      make -f ./src/hbtp/makefile ./output/hbtp/cmh_${snap}.csv
+
+# ################################################################################
+# # HBT+ -- CMHs                                                                 #
+# ################################################################################
+# foreach id (`more "./output/hbtp/ids.txt"`)
+# 	bsub -P durham \
+# 			 -n 1 \
+# 			 -q cordelia \
+# 			 -J "cmh_${snap}_${id}" \
+# 			 -oo ./log/log_%J.txt \
+# 			 -eo ./log/err_%J.txt \
+# 			 python -m src.hbtp.cmh ${snap} ${id}
+# end
