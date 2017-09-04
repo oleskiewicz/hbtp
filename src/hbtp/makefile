@@ -26,7 +26,7 @@ $(OUT)/cmh_$(SNAP)_%.csv: $(SRC)/cmh.py
 	python -m $(patsubst %.py,%,$(subst /,.,$<)) $(SNAP) $* 
 
 $(OUT)/cmh_$(SNAP).csv: $(SRC)/forge.py
-	printf "HaloId,IdentificationSnapshot,Snapshot,M200\n" > $@
+	printf "HostHaloId,IdentificationSnapshot,Snapshot,M200Crit\n" > $@
 	cat $(OUT)/cmh_$(SNAP)_*.csv >> $@
 	python -m $(patsubst %.py,%,$(subst /,.,$<)) $(SNAP)
 

@@ -255,12 +255,14 @@ class HBTReader:
 			subid=trackId
 		return self.LoadSubhalos(isnap, subid)
 
-	def GetTrack(self, trackId, fields=None):
+	def GetTrack(self, trackId, MinSnap=None, MaxSnap=None, fields=None):
 		"""Loads an entire track of the given ``trackId``"""
 		track=[]
 		snaps=[]
-		snapbirth=self.GetSub(trackId)['SnapshotIndexOfBirth']
-		for isnap in range(snapbirth, self.MaxSnap+1):
+		MinSnap = self.GetSub(trackId)['SnapshotIndexOfBirth']\
+			if MinSnap is None else MinSnap
+		MaxSnap = self.MaxSnap if MaxSnap is None else MaxSnap
+		for isnap in range(MinSnap, MaxSnap+1):
 			s=self.GetSub(trackId, isnap)
 			if fields is not None:
 				s=s[fields]
@@ -383,7 +385,7 @@ class HBTReader:
 		return [HostHalo(HostHaloId, self, isnap), [] if len(progenitors) == 0 else\
 			[self.GetMergerTree(progenitor, isnap-1, file) for progenitor in progenitors]]
 
-	def GetCollapsedMassHistory(self, HostHaloId, isnap=-1, f=0.01):
+	def GetCollapsedMassHistory(self, HostHaloId, isnap=-1, NFW_f=0.01):
 		"""Calculates a CMH, starting at a FOF group
 		
 		CMH is a sum of masses of all progenitors over a threshold
@@ -392,32 +394,43 @@ class HBTReader:
 			HostHaloIds (list): originally a one-element list, recursively called to
 				contain all progenitors at each snapshot
 			isnap (int): (default = -1) initial snapshot
-			f (float): (default = 0.01) NFW :math:`f` parameter
+			NFW_f (float): (default = 0.01) NFW :math:`f` parameter
 		"""
-
+		#TODO: eliminate non-centrals
 		m0 = self.GetHostHalo(HostHaloId, isnap)['M200Crit']
-		cmh = [m0,]
-		HostHaloes = [HostHaloId,]
 
-		snap = isnap
-		while len(HostHaloes) > 0:
-			get_progs = np.vectorize(lambda host:\
-				self.GetHostProgenitors(host, snap), otypes=[np.ndarray])
-			get_mass = np.vectorize(lambda host:\
-				self.GetHostHalo(host, snap-1)['M200Crit'], otypes=[np.ndarray])
+		hosts = []
+		for trackId in self.GetSubsOfHost(HostHaloId, isnap)['TrackId']:
+			track = self.GetTrack(trackId, MaxSnap=isnap)
+			log.debug("Track %d across %d snapshots"\
+				%(trackId,len(track)))
+			hosts_of_track = zip(track['Snapshot'], track['HostHaloId'])
+			hosts.extend(hosts_of_track)
+		hosts = np.unique(np.array(hosts,\
+			dtype=np.dtype([('Snapshot', int), ('HostHaloId', int)])), axis=0)
+		hosts = hosts[hosts['HostHaloId'] != -1]
+		ms = [self.GetHostHalo(host['HostHaloId'], host['Snapshot'])['M200Crit']\
+			for host in hosts]
+		hosts = append_fields(hosts, 'M200Crit', ms, usemask=False)
 
-			progenitors = list(util.flatten(get_progs(HostHaloes)))
-			if len(progenitors) > 0:
-				ms = get_mass(progenitors)
-				cmh.append(np.sum(ms[ms > f*m0], dtype=np.float32))
+		snaps = np.unique(hosts['Snapshot'])
+		log.info("CMH with %d host haloes"%(len(hosts)))
 
-			log.debug("Snap %03d, %d halo(es), %d progenitor(s)"\
-				%(snap, len(HostHaloes), len(progenitors)))
+		cmh = np.array(zip(\
+			np.full(len(snaps), HostHaloId),\
+			np.full(len(snaps), isnap),\
+			snaps,\
+			np.zeros(len(snaps))),\
+			dtype=np.dtype([\
+				('HostHaloId',np.int32),\
+				('IdentificationSnapshot',np.int32),\
+				('Snapshot',np.int32),\
+				('M200Crit',np.float32),\
+		]))
 
-			HostHaloes = progenitors
-			snap = snap - 1
-
-		log.debug("Snap %03d, finished"%(snap))
+		for i,_ in np.ndenumerate(cmh):
+			cmh[i]['M200Crit'] = np.sum(filter(lambda m: m > NFW_f*m0,\
+				hosts[hosts['Snapshot'] == cmh[i]['Snapshot']]['M200Crit']))
 
 		return cmh
 
@@ -425,9 +438,8 @@ class HBTReader:
 		try:
 			subhaloes = self.GetSubsOfHost(HostHaloId, isnap=isnap)['TrackId']
 			result = np.unique([self.GetSub(subhalo, isnap=isnap-1)[0]['HostHaloId']\
-				# for subhalo in subhaloes]) # all
-				for subhalo in subhaloes if self.GetSub(subhalo, isnap=isnap-1)[0]['Rank'] == 0]) # no non-central following
-				# for subhalo in subhaloes if track in KnownTracks]) # no new tracks
+				for subhalo in subhaloes\
+				if self.GetSub(subhalo, isnap=isnap-1)[0]['Rank'] == 0])
 		except:
 			result = []
 		finally:

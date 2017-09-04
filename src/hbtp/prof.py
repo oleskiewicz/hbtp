@@ -17,10 +17,12 @@ if __name__ == '__main__':
 	reader = HBTReader("./data/")
 
 	with open("./output/hbtp/ids_%03d.txt"%snap, 'r') as f:
-		hosts = map(lambda id: int(id.strip()), f.readlines())
+		ids = map(lambda id: int(id.strip()), f.readlines())
 
-	profs = pd.DataFrame(map(lambda h: reader.GetHostProfile(h, snap, bins=bins)[0],\
-		hosts), columns=np.arange(1,nbins), index=hosts)
-	profs.to_csv("./output/hbtp/prof_%03d.csv"%snap, sep=",", index_label="id")
+	log.info("%d haloes at snapshot %d"%(len(ids),snap))
 
-
+	profs = pd.DataFrame(map(lambda id:\
+		reader.GetHostProfile(id, snap, bins=bins)[0], ids),\
+		columns=np.arange(1,nbins), index=ids)
+	profs.to_csv("./output/hbtp/prof_%03d.csv"%snap,\
+		sep=",", index_label="HostHaloId")

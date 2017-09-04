@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import sys
+import numpy as np
 
 from HBTReader import HBTReader
 
@@ -13,12 +14,25 @@ if __name__ == '__main__':
 	reader = HBTReader("./data/")
 
 	with open("./output/hbtp/ids_%03d.txt"%snap, 'r') as f:
-		hosts = map(lambda id: int(id.strip()), f.readlines())
+		ids = map(lambda id: int(id.strip()), f.readlines())
 
-	with open("./output/hbtp/prop_%03d.csv"%snap, 'w') as f:
-		f.write("snap,HaloId,R200CritComoving,M200Crit\n")
-		for host_id in hosts:
-			host = reader.GetHostHalo(host_id, snap)
-			f.write("%d,%d,%f,%f\n"%(snap, host['HaloId'],\
-				host['R200CritComoving'], host['M200Crit']))
+	log.info("%d haloes at snapshot %d"%(len(ids),snap))
 
+	hosts = []
+	for id in ids:
+		host = reader.GetHostHalo(id, snap)
+		log.debug("Found halo %d"%(id))
+		hosts.append((host['HaloId'], snap,\
+			 host['R200CritComoving'], host['M200Crit']))
+
+	hosts = np.array(hosts,\
+		dtype=np.dtype([\
+			('HostHaloId',np.int32),\
+			('IdentificationSnapshot',np.int32),\
+			('R200CritComoving',np.float32),\
+			('M200Crit',np.float32)\
+	]))
+
+	np.savetxt("./output/hbtp/prop_%03d.csv"%(snap),\
+		hosts, fmt="%d,%d,%f,%f",\
+		header=",".join(hosts.dtype.names), comments="")

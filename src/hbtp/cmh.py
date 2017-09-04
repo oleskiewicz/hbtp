@@ -2,7 +2,6 @@
 import sys
 import numpy as np
 
-from .. import util
 from HBTReader import HBTReader
 
 import logging
@@ -16,19 +15,10 @@ if __name__ == '__main__':
 	NFW_f = 0.02
 	reader = HBTReader("./data/")
 
-	log.info("Halo %d at %d"%(host, snap))
-	cmh = reader.GetCollapsedMassHistory([host,], snap, NFW_f)
+	log.info("Halo %d at snapshot %d"%(host,snap))
 
-	# CSV CMH
-	with open("./output/hbtp/cmh_%03d_%d.csv"%(snap,host), 'w') as f:
-		# fcntl.flock(f, fcntl.LOCK_EX)
-		f.write("HaloId,IdentificationSnapshot,Snapshot,M200\n")
-		for i,ms in enumerate(cmh):
-			f.write("%d,%d,%d,%f\n"%(host,snap,snap-i,ms))
-		# fcntl.flock(f, fcntl.LOCK_UN)
+	cmh = reader.GetCollapsedMassHistory(host, snap, NFW_f)
 
-	# # Dot merger tree
-	# with open("./output/hbtp/mt_%03d_%d.dot"%(snap, host), 'w') as f:
-	# 	f.write("digraph {\n")
-	# 	t = reader.GetMergerTree(host, snap, f)
-	# 	f.write("}\n")
+	np.savetxt("./output/hbtp/cmh_%03d_%d.csv"%(snap,host),\
+		cmh, fmt="%d,%d,%d,%.5f")
+		# header=",".join(cmh.dtype.names), comments="")
