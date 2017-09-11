@@ -398,12 +398,16 @@ class HBTReader:
 		"""
 		#TODO: eliminate non-centrals
 		m0 = self.GetHostHalo(HostHaloId, isnap)['M200Crit']
+		trackIds = self.GetSubsOfHost(HostHaloId, isnap)['TrackId']
+
+		log.info("Starting halo %d of mass %.2f with %d tracks at snapshot %d"\
+			%(HostHaloId,m0,len(trackIds),isnap))
 
 		hosts = []
-		for trackId in self.GetSubsOfHost(HostHaloId, isnap)['TrackId']:
+		for trackId in trackIds:
 			track = self.GetTrack(trackId, MaxSnap=isnap)
-			log.debug("Track %d across %d snapshots"\
-				%(trackId,len(track)))
+			log.debug("Track %d of halo %d@%d across %d snapshots"\
+				%(trackId,HostHaloId,isnap,len(track)))
 			hosts_of_track = zip(track['Snapshot'], track['HostHaloId'])
 			hosts.extend(hosts_of_track)
 		hosts = np.unique(np.array(hosts,\
@@ -412,9 +416,10 @@ class HBTReader:
 		ms = [self.GetHostHalo(host['HostHaloId'], host['Snapshot'])['M200Crit']\
 			for host in hosts]
 		hosts = append_fields(hosts, 'M200Crit', ms, usemask=False)
-
 		snaps = np.unique(hosts['Snapshot'])
-		log.info("CMH with %d host haloes"%(len(hosts)))
+
+		log.info("Finished queries for halo %d@%d with %d host haloes across %d snapshots"\
+			%(HostHaloId,isnap,len(hosts),len(snaps)))
 
 		cmh = np.array(zip(\
 			np.full(len(snaps), HostHaloId),\
@@ -426,11 +431,14 @@ class HBTReader:
 				('IdentificationSnapshot',np.int32),\
 				('Snapshot',np.int32),\
 				('M200Crit',np.float32),\
-		]))
+			]))
 
 		for i,_ in np.ndenumerate(cmh):
 			cmh[i]['M200Crit'] = np.sum(filter(lambda m: m > NFW_f*m0,\
 				hosts[hosts['Snapshot'] == cmh[i]['Snapshot']]['M200Crit']))
+
+		log.info("Finished CMH for halo %d@%d"\
+			%(HostHaloId,isnap))
 
 		return cmh
 

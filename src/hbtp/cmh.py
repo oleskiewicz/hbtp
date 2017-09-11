@@ -15,10 +15,7 @@ if __name__ == '__main__':
 	NFW_f = 0.02
 	reader = HBTReader("./data/")
 
-	log.info("Halo %d at snapshot %d"%(host,snap))
-
 	cmh = reader.GetCollapsedMassHistory(host, snap, NFW_f)
-
 	np.savetxt("./output/hbtp/cmh_%03d_%d.csv"%(snap,host),\
 		cmh, fmt="%d,%d,%d,%.5f")
-		# header=",".join(cmh.dtype.names), comments="")
+	log.info("Wrote CMH for halo %d@%d"%(host,snap))
