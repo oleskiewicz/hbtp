@@ -1,6 +1,6 @@
 #!/usr/bin/env tcsh
 
-set snap = 051
+set snap = 122
 
 # ################################################################################
 # # DHalo -- CMH                                                                 #
@@ -21,56 +21,45 @@ set snap = 051
 # ################################################################################
 # # HBT+ -- ids                                                                  #
 # ################################################################################
-# bsub -P durham \
-#      -n 1 \
-#      -q cordelia \
-#      -J "ids_$snap" \
-#      -oo ./log/log_%J.txt \
-#      -eo ./log/err_%J.txt \
-#      python -m src.hbtp.query $snap
+# bsub \
+# 	-P durham -n 1 -q cordelia \
+# 	-oo ./log/log_%J.txt -eo ./log/err_%J.txt \
+# 	-J "ids_$snap" \
+# 	python -m src.hbtp.query $snap
 
 # ################################################################################
 # # HBT+ -- properties                                                           #
 # ################################################################################
-# bsub -P durham \
-#      -n 1 \
-#      -q cordelia \
-#      -J "props_$snap" \
-#      -oo ./log/log_%J.txt \
-#      -eo ./log/err_%J.txt \
-#      python -m src.hbtp.prop ${snap}
-
+# bsub \
+# 	-P durham -n 1 -q cordelia \
+# 	-oo ./log/log_%J.txt -eo ./log/err_%J.txt \
+# 	-J "props_$snap" \
+# 	python -m src.hbtp.prop ${snap}
 # ################################################################################
 # # HBT+ -- density profiles                                                     #
 # ################################################################################
-# bsub -P durham \
-#      -n 1 \
-#      -q cordelia \
-#      -J "profs_$snap" \
-#      -oo ./log/log_%J.txt \
-#      -eo ./log/err_%J.txt \
-#      python -m src.hbtp.prof ${snap}
-
-# ################################################################################
-# # HBT+ -- combine CMHs                                                         #
-# ################################################################################
-# bsub -P durham \
-#      -n 1 \
-#      -q cordelia \
-#      -J "cmhs_$snap" \
-#      -oo ./log/log_%J.txt \
-#      -eo ./log/err_%J.txt \
-#      make -f ./src/hbtp/makefile ./output/hbtp/cmh_${snap}.csv
+# bsub \
+# 	-P durham -n 1 -q cordelia \
+# 	-oo ./log/log_%J.txt -eo ./log/err_%J.txt \
+# 	-J "profs_$snap" \
+# 	python -m src.hbtp.prof ${snap}
 
 # ################################################################################
 # # HBT+ -- CMHs                                                                 #
 # ################################################################################
-# foreach id (`more "./output/hbtp/ids.txt"`)
-# 	bsub -P durham \
-# 			 -n 1 \
-# 			 -q cordelia \
-# 			 -J "cmh_${snap}_${id}" \
-# 			 -oo ./log/log_%J.txt \
-# 			 -eo ./log/err_%J.txt \
-# 			 python -m src.hbtp.cmh ${snap} ${id}
+# foreach id (`head -n 1000 "./output/hbtp/ids_${snap}.txt"`)
+# 	bsub\
+# 		-P durham -n 1 -q cordelia \
+# 		-J "cmh_${snap}[${id}]%40" \
+# 		-oo ./log/log_%J.%I.txt -eo ./log/err_%J.%I.txt \
+# 		python -m src.hbtp.cmh ${snap} ${id}
 # end
+
+# ################################################################################
+# # HBT+ -- combine CMHs                                                         #
+# ################################################################################
+# bsub\
+# 	-P durham -n 1 -q cordelia \
+# 	-oo ./log/log_%J.txt -eo ./log/err_%J.txt \
+# 	-J "cmhcomb_$snap" \
+# 	make -f ./src/hbtp/makefile ./output/hbtp/cmh_${snap}.csv
