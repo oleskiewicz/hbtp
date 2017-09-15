@@ -22,7 +22,7 @@ def rho_c(z = 0.0):
 def prof(ax, d):
 	ax.set_title("FoF group density profile")
 	ax.set_xlabel(r"$\log_{10}(R/R_{200})$")
-	ax.set_ylabel(r"$\log_{10}(N(\mathrm{in shell}) / N(< R_{200}))$")
+	ax.set_ylabel(r"$\log_{10}(N(\mathrm{shell}) / N(< R_{200}))$")
 	
 	x = np.linspace(-2.5, 0.0, 32)
 	d = np.array(d, dtype=np.float32)
@@ -47,7 +47,7 @@ def cmh(ax, d, isnap=122):
 	ax.set_title("FoF group collapsed mass history")
 	ax.set_xlabel(r"$\log_{10}(\rho_c(z) / \rho_c(z_0))$")
 	ax.set_ylabel(r"$\log_{10}(M_{200}\mathrm{progenitors})$")
-	
+
 	z = read.snaps()
 	x = rho_c(np.array([z[z['Snapshot'] == s][0]['Redshift']\
 		for s in map(lambda s: int(s), d.columns)]))
@@ -69,7 +69,10 @@ if __name__ == '__main__':
 	fig.suptitle("Snapshot %d, $z_0=%.2f$"%(snap,z0))
 
 	# bin haloes by mass
-	idx = list(read.prop(snap)[:999]['mass_bin'] == 9)
+	idx = list(read.prop(snap)[:999]['M200Crit_bin'] == 9)
+
+	d = read.prop(snap)[:999]
+	print process.count_grouped(d['M200Crit_bin'])
 
 	data_cmh = read.cmh(snap).head(999)[idx]
 	cmh(ax[0], data_cmh, snap)
@@ -79,5 +82,5 @@ if __name__ == '__main__':
 
 	fig.tight_layout()
 	fig.subplots_adjust(top = 0.9)
-	plt.show()
-	# plt.savefig("%03d.pdf"%snap)
+	# plt.show()
+	plt.savefig("%03d.pdf"%snap)
