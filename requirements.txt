@@ -1,6 +1,9 @@
 ipython
+notebook
+jupyterthemes
 h5py
 numpy
+scipy
 pandas
 matplotlib
 Sphinx
