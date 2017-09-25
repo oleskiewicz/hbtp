@@ -4,11 +4,8 @@ import glob
 import numbers
 import numpy as np
 import h5py
-import pandas as pd
 from numpy.lib.recfunctions import append_fields
 from matplotlib.pylab import find
-
-from .. import util
 
 import logging
 from logging.config import fileConfig
@@ -68,13 +65,14 @@ class HBTReader:
 		MaxSnap=int(extension[0])
 
 		if MaxSnap!=self.MaxSnap:
-			print "HBT run not finished yet, maxsnap %d found (expecting %d)"%(MaxSnap, self.MaxSnap)
+			log.info("HBT run not finished yet, maxsnap %d found (expecting %d)"\
+				%(MaxSnap, self.MaxSnap))
 			self.MaxSnap=MaxSnap
 
 		self.nfiles=0
 		if len(extension)==3:
 			self.nfiles=len(glob.glob(self.rootdir+'/%03d'%MaxSnap+'/SubSnap_%03d.*.hdf5'%MaxSnap))
-			print self.nfiles, "subfiles per snapshot"
+			log.info(self.nfiles, "subfiles per snapshot")
 
 		if 'MinSnapshotIndex' in self.Options:
 			self.MinSnap=int(self.Options['MinSnapshotIndex'])
@@ -85,7 +83,8 @@ class HBTReader:
 			with self.Open(-1) as f:
 				self.ParticleMass=f['/Cosmology/ParticleMass'][0]
 		except:
-			print "Info: fail to get ParticleMass."
+			log.error("fail to get ParticleMass.")
+			pass
 
 	def Snapshots(self):
 		return np.arange(self.MinSnap, self.MaxSnap+1)
@@ -184,8 +183,6 @@ class HBTReader:
 			subhalos=np.hstack(subhalos)
 		else:
 			subhalos=np.array(subhalos)
-		if show_progress:
-			print ""
 		# subhalos.sort(order=['HostHaloId','Nbound'])
 
 		return subhalos
@@ -244,6 +241,20 @@ class HBTReader:
 						return subfile['ParticleProperties'][subindex-offset]
 				offset+=nsub
 		raise RuntimeError("subhalo %d not found"%subindex)
+
+	def GetHostHaloParticles(self, HostHaloId, isnap=-1):		
+		"""Returns particles inside FoF R200Crit radius.
+		"""
+		try:
+			h = self.GetHostHalo(HostHaloId, isnap)
+		except:
+			log.error("Halo %d not found"%HostHaloId)
+			raise RuntimeError("Halo %d not found"%HostHaloId)
+
+		ps = np.concatenate([self.GetParticleProperties(i, isnap)\
+			for i in self.LoadSubhalos(isnap)['TrackId']])
+		rs = np.sum(np.power(ps['ComovingPosition'] - h['CenterComoving'], 2.0), axis=1)
+		return rs
 
 	def GetSub(self, trackId, isnap=-1):
 		"""Loads a subhalo with the given ``trackId`` at snapshot ``isnap``"""
@@ -391,8 +402,7 @@ class HBTReader:
 		CMH is a sum of masses of all progenitors over a threshold
 
 		Arguments:
-			HostHaloIds (list): originally a one-element list, recursively called to
-				contain all progenitors at each snapshot
+			HostHaloId (int): starting point of the tree
 			isnap (int): (default = -1) initial snapshot
 			NFW_f (float): (default = 0.01) NFW :math:`f` parameter
 		"""
@@ -411,9 +421,9 @@ class HBTReader:
 			hosts_of_track = zip(track['Snapshot'], track['HostHaloId'])
 			hosts.extend(hosts_of_track)
 		hosts = np.unique(np.array(hosts,\
-			dtype=np.dtype([('Snapshot', int), ('HostHaloId', int)])), axis=0)
-		hosts = hosts[hosts['HostHaloId'] != -1]
-		ms = [self.GetHostHalo(host['HostHaloId'], host['Snapshot'])['M200Crit']\
+			dtype=np.dtype([('Snapshot', int), ('HaloId', int)])), axis=0)
+		hosts = hosts[hosts['HaloId'] != -1]
+		ms = [self.GetHostHalo(host['HaloId'], host['Snapshot'])['M200Crit']\
 			for host in hosts]
 		hosts = append_fields(hosts, 'M200Crit', ms, usemask=False)
 		snaps = np.unique(hosts['Snapshot'])
@@ -423,12 +433,10 @@ class HBTReader:
 
 		cmh = np.array(zip(\
 			np.full(len(snaps), HostHaloId),\
-			np.full(len(snaps), isnap),\
 			snaps,\
 			np.zeros(len(snaps))),\
 			dtype=np.dtype([\
-				('HostHaloId',np.int32),\
-				('IdentificationSnapshot',np.int32),\
+				('HaloId',np.int32),\
 				('Snapshot',np.int32),\
 				('M200Crit',np.float32),\
 			]))
@@ -472,42 +480,32 @@ class HBTReader:
 
 	def GetHostProfile(self, HostHaloId, isnap=-1, bins=None):
 		"""Returns normalised, binned particle positions of a FoF group"""
+		log.debug('Calculating profile for halo %d'%HostHaloId)
 		result = []
 
 		try:
 			subhalos = self.GetSubsOfHost(HostHaloId, isnap)['TrackId']
 			hosthalo = self.LoadHostHalos(isnap, selection=HostHaloId)
+
+			log.debug('Found %d subhalos'%len(subhalos))
+
+			#TODO: test two different radii
+			#TODO: improve querying to non-bound particles
 			positions = [((particle - hosthalo['CenterComoving'])\
 				/ hosthalo['R200CritComoving'])[0]\
 				for subhalo in subhalos for particle in\
 				self.GetParticleProperties(subhalo, isnap)['ComovingPosition']]
+			
+			log.debug('Found %d particles'%len(positions))
 
 			if bins is not None:
-				distances = map(lambda row: np.sqrt(np.sum(map(lambda x: x*x, row))),\
-					positions)
+				distances = np.apply_along_axis(lambda x:\
+					np.sqrt(np.sum(np.power(x, 2.0))), 1, positions)
 				result = np.histogram(distances, bins=bins)
 			else:
 				result = positions
+
 		except TypeError:
 			result = []
 
 		return result
-
-class HostHalo():
-	def __init__(self, HostHaloId, reader, isnap=-1):
-		self.HostHaloId = HostHaloId
-		self.isnap = isnap
-		self.M200Crit = reader.GetHostHalo(HostHaloId, isnap)['M200Crit']
-	def __str__(self):
-		return "%s: %s"%(self.isnap, self.HostHaloId)
-	def __eq__(self, other):
-		if isinstance(other, self.__class__):
-			return self.__dict__ == other.__dict__
-		return NotImplemented
-	def __ne__(self, other):
-		if isinstance(other, self.__class__):
-			return not self.__eq__(other)
-		return NotImplemented
-	def __hash__(self):
-		return hash(tuple(sorted(self.__dict__.items())))
-

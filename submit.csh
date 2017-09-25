@@ -47,10 +47,10 @@ set snap = 122
 # ################################################################################
 # # HBT+ -- CMHs                                                                 #
 # ################################################################################
-# foreach id (`head -n 1000 "./output/hbtp/ids_${snap}.txt"`)
+# foreach id (`more "./output/hbtp/ids-${snap}.txt"`)
 # 	bsub\
 # 		-P durham -n 1 -q cordelia \
-# 		-J "cmh_${snap}[${id}]%40" \
+# 		-J "cmh_${snap}[${id}]%50" \
 # 		-oo ./log/log_%J.%I.txt -eo ./log/err_%J.%I.txt \
 # 		python -m src.hbtp.cmh ${snap} ${id}
 # end

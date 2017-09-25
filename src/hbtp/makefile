@@ -1,33 +1,32 @@
 SRC:=./src/hbtp
 OUT:=./output/hbtp
 SNAP:=051
-IDS:=$(shell more $(OUT)/ids_$(SNAP).txt)
-# IDS:=0 1 2 3 4 5 6 7 8 9
+IDS:=$(shell more $(OUT)/ids-$(SNAP).txt)
 
-ids: $(OUT)/ids_$(SNAP).txt
-props: $(foreach ID,$(IDS),$(OUT)/prop_$(SNAP).csv)
-profs: $(foreach ID,$(IDS),$(OUT)/prof_$(SNAP).csv)
-cmhs: $(foreach ID,$(IDS),$(OUT)/cmh_$(SNAP)_$(ID).csv)
-plots: $(foreach ID,$(IDS),./plots/mt_$(SNAP)_$(ID).pdf)
+ids: $(OUT)/ids-$(SNAP).txt
+props: $(foreach ID,$(IDS),$(OUT)/prop-$(SNAP).csv)
+profs: $(foreach ID,$(IDS),$(OUT)/prof-$(SNAP).csv)
+cmhs: $(foreach ID,$(IDS),$(OUT)/cmh-$(SNAP)_$(ID).csv) $(OUT)/cmh-$(SNAP).csv
+plots: $(foreach ID,$(IDS),./plots/mt-$(SNAP)_$(ID).pdf)
 
-$(OUT)/ids_$(SNAP).txt: $(SRC)/query.py
+$(OUT)/ids-$(SNAP).txt: $(SRC)/query.py
 	python -m $(patsubst %.py,%,$(subst /,.,$<)) $(SNAP)
 
-$(OUT)/prof_$(SNAP).csv: $(SRC)/prof.py ids
+$(OUT)/prof-$(SNAP).csv: $(SRC)/prof.py ids
 	python -m $(patsubst %.py,%,$(subst /,.,$<)) $(SNAP)
 
-$(OUT)/prop_$(SNAP).csv: $(SRC)/prop.py ids
+$(OUT)/prop-$(SNAP).csv: $(SRC)/prop.py ids
 	python -m $(patsubst %.py,%,$(subst /,.,$<)) $(SNAP)
 
-./plots/mt_$(SNAP)_%.pdf: $(OUT)/mt_$(SNAP)_%.dot
+./plots/mt-$(SNAP)_%.pdf: $(OUT)/mt_$(SNAP)_%.dot
 	dot -Tpdf -o $@ $<
 
-$(OUT)/cmh_$(SNAP)_%.csv: $(SRC)/cmh.py
+$(OUT)/cmh-$(SNAP)_%.csv: $(SRC)/cmh.py
 	python -m $(patsubst %.py,%,$(subst /,.,$<)) $(SNAP) $* 
 
-$(OUT)/cmh_$(SNAP).csv: $(SRC)/forge.py
-	printf "HostHaloId,IdentificationSnapshot,Snapshot,M200Crit\n" > $@
-	cat $(OUT)/cmh_$(SNAP)_*.csv >> $@
+$(OUT)/cmh-$(SNAP).csv: $(SRC)/forge.py
+	printf "HaloId,Snapshot,M200Crit\n" > $@
+	cat $(OUT)/cmh-$(SNAP)_*.csv >> $@
 	python -m $(patsubst %.py,%,$(subst /,.,$<)) $(SNAP)
 
 # ./plots/cmh_$(SNAP).pdf: $(SRC)/plot/cmh.py $(OUT)/cmh_$(SNAP).csv

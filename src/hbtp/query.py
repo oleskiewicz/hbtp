@@ -13,14 +13,20 @@ if __name__ == '__main__':
 	snap = int(sys.argv[1])
 	reader = HBTReader("./data/")
 
-	log.debug("Snapshot %d"%(snap))
+	log.info("Loading snapshot %d"%(snap))
 
-	hosts = filter(lambda h: len(reader.GetSubsOfHost(h, snap)) > 0,\
-		reader.LoadHostHalos(isnap=snap)['HaloId'])
+	hosts = reader.LoadHostHalos(snap)[['HaloId','R200CritComoving','M200Crit']]
 
-	log.debug("%d haloes"%(len(hosts)))
+	# filter small mass haloes
+	hosts = hosts[hosts['M200Crit'] >= 20]
+	# ids = hosts['HaloId']
 
-	with open("./output/hbtp/ids_%03d.txt"%snap, 'w') as f:
-		for host in hosts:
-			f.write("%d\n"%host)
+	# filter orphan hosts
+	ids = list(filter(lambda id: len(reader.GetSubsOfHost(id,snap)) > 0,\
+		hosts['HaloId']))
 
+	log.info("Found %d haloes"%(len(ids)))
+
+	with open("./output/hbtp/ids-%03d.txt"%snap, 'w') as f:
+		for id in ids:
+			f.write("%d\n"%id)
