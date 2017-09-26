@@ -52,6 +52,7 @@ class HBTReader:
 		config_file=subhalo_path+'/Parameters.log'
 		self.Options=ConfigReader(config_file).Options
 		self.rootdir=self.Options['SubhaloPath']
+		self.rootfofdir='./output/hbtp/HaloSize'
 		self.MaxSnap=int(self.Options['MaxSnapshotIndex'])
 		self.BoxSize=float(self.Options['BoxSize'])
 		self.Softening=float(self.Options['SofteningHalo'])
@@ -103,7 +104,7 @@ class HBTReader:
 			return self.rootdir+'/%03d/'%isnap+filetype+'Snap_%03d.%d.hdf5'%(isnap, ifile)
 		else:
 			if filetype == 'HaloSize':
-				return "%s/%s/%s_%d.hdf5"%(self.rootdir, filetype, filetype, isnap)
+				return "%s/%s_%03d.hdf5"%(self.rootfofdir, filetype, isnap)
 			else:
 				return self.rootdir+'/'+filetype+'Snap_%03d.hdf5'%(isnap)
 
@@ -241,20 +242,6 @@ class HBTReader:
 						return subfile['ParticleProperties'][subindex-offset]
 				offset+=nsub
 		raise RuntimeError("subhalo %d not found"%subindex)
-
-	def GetHostHaloParticles(self, HostHaloId, isnap=-1):		
-		"""Returns particles inside FoF R200Crit radius.
-		"""
-		try:
-			h = self.GetHostHalo(HostHaloId, isnap)
-		except:
-			log.error("Halo %d not found"%HostHaloId)
-			raise RuntimeError("Halo %d not found"%HostHaloId)
-
-		ps = np.concatenate([self.GetParticleProperties(i, isnap)\
-			for i in self.LoadSubhalos(isnap)['TrackId']])
-		rs = np.sum(np.power(ps['ComovingPosition'] - h['CenterComoving'], 2.0), axis=1)
-		return rs
 
 	def GetSub(self, trackId, isnap=-1):
 		"""Loads a subhalo with the given ``trackId`` at snapshot ``isnap``"""
@@ -478,34 +465,8 @@ class HBTReader:
 
 		return result
 
-	def GetHostProfile(self, HostHaloId, isnap=-1, bins=None):
+	def GetHostProfile(self, selection=None, isnap=-1):
 		"""Returns normalised, binned particle positions of a FoF group"""
-		log.debug('Calculating profile for halo %d'%HostHaloId)
-		result = []
-
-		try:
-			subhalos = self.GetSubsOfHost(HostHaloId, isnap)['TrackId']
-			hosthalo = self.LoadHostHalos(isnap, selection=HostHaloId)
-
-			log.debug('Found %d subhalos'%len(subhalos))
-
-			#TODO: test two different radii
-			#TODO: improve querying to non-bound particles
-			positions = [((particle - hosthalo['CenterComoving'])\
-				/ hosthalo['R200CritComoving'])[0]\
-				for subhalo in subhalos for particle in\
-				self.GetParticleProperties(subhalo, isnap)['ComovingPosition']]
-			
-			log.debug('Found %d particles'%len(positions))
-
-			if bins is not None:
-				distances = np.apply_along_axis(lambda x:\
-					np.sqrt(np.sum(np.power(x, 2.0))), 1, positions)
-				result = np.histogram(distances, bins=bins)
-			else:
-				result = positions
-
-		except TypeError:
-			result = []
-
-		return result
+		log.info('Retrieving profile for halos %s'%str(selection))
+		profile = self.LoadHostHalos(isnap, selection)['Profile']
+		return profile
