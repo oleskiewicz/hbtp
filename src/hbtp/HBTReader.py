@@ -448,7 +448,13 @@ class HBTReader:
 		finally:
 			return result
 
-	def GetProfile(self, TrackId, isnap=-1, bins=None):
+	def GetHostProfile(self, selection=None, isnap=-1):
+		"""Returns normalised, binned particle positions of a FoF group"""
+		log.info('Retrieving profile for halos %s'%str(selection))
+		profile = self.LoadHostHalos(isnap, selection)['Profile']
+		return profile
+
+	def CalculateProfile(self, TrackId, isnap=-1, bins=None):
 		"""Returns normalised, binned particle positions of a subhalo"""
 		result = []
 		subhalo = self.GetSub(TrackId, isnap)
@@ -465,8 +471,32 @@ class HBTReader:
 
 		return result
 
-	def GetHostProfile(self, selection=None, isnap=-1):
+	def CalculateHostProfile(self, HostHaloId, isnap=-1, bins=None):
 		"""Returns normalised, binned particle positions of a FoF group"""
-		log.info('Retrieving profile for halos %s'%str(selection))
-		profile = self.LoadHostHalos(isnap, selection)['Profile']
-		return profile
+		log.debug('Calculating profile for halo %d'%HostHaloId)
+		result = []
+
+		try:
+			subhalos = self.GetSubsOfHost(HostHaloId, isnap)['TrackId']
+			hosthalo = self.LoadHostHalos(isnap, selection=HostHaloId)
+
+			log.debug('Found %d subhalos'%len(subhalos))
+
+			positions = [((particle - hosthalo['CenterComoving'])\
+				/ hosthalo['R200CritComoving'])[0]\
+				for subhalo in subhalos for particle in\
+				self.GetParticleProperties(subhalo, isnap)['ComovingPosition']]
+			
+			log.debug('Found %d particles'%len(positions))
+
+			if bins is not None:
+				distances = np.apply_along_axis(lambda x:\
+					np.sqrt(np.sum(np.power(x, 2.0))), 1, positions)
+				result = np.histogram(distances, bins=bins)
+			else:
+				result = positions
+
+		except TypeError:
+			result = []
+
+		return result
