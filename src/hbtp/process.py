@@ -2,8 +2,8 @@
 import sys
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import matplotlib
+# import matplotlib.pyplot as plt
+# import matplotlib
 
 from src.hbtp.HBTReader import HBTReader
 from src import read
@@ -125,23 +125,31 @@ def cmh(snap, reader, haloes, F=0.1, ax=None):
 
 	return rho_f
 
-if __name__ == '__main__':
-	snap = int(sys.argv[1])
-	bin = int(sys.argv[2])
+def process(reader, snap, bin):
 	zs = read.snaps()
 	z0 = zs[zs['Snapshot'] == snap][0]['Redshift']
 
-	r = HBTReader('./data/')
-
-	fig, ax = plt.subplots(ncols=2, nrows=1, figsize=(12.8, 8.3))
 	hs, mf, bins = halo_mf(snap, r)
 	hs = hs[hs['bin'] == bin]
 
-	c = prof(snap, r, hs, ax[0])
+	c = prof(snap, reader, hs)
 	rho_s = np.log10(nfw.rho_enc(1.0/c, c))
 	F = nfw.Y(1.0)/nfw.Y(c)
-	rho_f = cmh(snap, r, hs, F, ax[1])
+	rho_f = cmh(snap, reader, hs, F)
 
-	fig.suptitle(r'$z=%.2f$, %d haloes, $%.2f < \log_{10}(M_{200}/M_{\odot}) < %.2f$'\
-		%(z0, len(hs), bins[bin-1], bins[bin]))
-	plt.savefig('./plot_%03d_%02d.pdf'%(snap,bin))
+	return rho_f, rho_s
+
+if __name__ == '__main__':
+	snaps = [51,78,93]
+	bins = range(1, 11)
+	r = HBTReader('./data/')
+
+	with open('./output/hbtp/rhof_rhos.csv','w') as f:
+		f.write('snap,bin,rho_f,rho_s\n')
+		for snap in snaps:
+			for bin in bins:
+				try:
+					rho_f, rho_s = process(r, snap, bin)
+					f.write('%d,%d,%f,%f\n'%(snap, bin, rho_f, rho_s))
+				except:
+					pass
