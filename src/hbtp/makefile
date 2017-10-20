@@ -1,6 +1,6 @@
 SRC:=./src/hbtp
-OUT:=./output/hbtp
-SNAP:=051
+OUT:=./output
+SNAP:=122
 IDS:=$(shell more $(OUT)/ids-$(SNAP).txt)
 
 ids: $(OUT)/ids-$(SNAP).txt

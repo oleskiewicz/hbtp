@@ -2,13 +2,17 @@
 import sys
 import numpy as np
 import pandas as pd
-# import matplotlib.pyplot as plt
-# import matplotlib
+import matplotlib.pyplot as plt
+
+import logging
+from logging.config import fileConfig
+fileConfig("./log.conf")
+log = logging.getLogger()
 
 from src.hbtp.HBTReader import HBTReader
 from src import read
 from src import cosmology
-from src import nfw
+from src import einasto
 
 def subhalo_mf(snap, reader, ax=None):
 	"""Selects, bins & bins subhaloes into 20 log-spaced bins
@@ -60,24 +64,24 @@ def prof(snap, reader, haloes, ax=None):
 	ps = np.divide(ps.T, np.sum(ps, axis=1)).T
 	p = np.median(ps, axis=0)
 
-	c = nfw.fit(\
-		y=p,
-		f=lambda c: nfw.m(np.power(10,x), c),\
-		xs=np.linspace(1.0, 10.0, 100),\
-		N=len(ps))
+	c, a = einasto.fit(\
+		p,
+		lambda c, a: einasto.m(np.power(10,x), c, a),\
+		np.linspace(1.0, 10.0, 100),\
+		np.linspace(0.01, 0.99, 100),\
+		len(ps))
 
 	if ax is not None:
 		ax.set_xlabel(r'$\log_{10}(r/r_{200})$')
 		ax.set_ylabel(r'$\log(M(r)/M(r<r_{200}))$')
-		ax.plot(x[idx], np.log10(nfw.m(np.power(10,x), c)[idx]),\
+		ax.plot(x[idx], np.log10(einasto.m(np.power(10,x), c)[idx]),\
 			color='C0', linewidth=4, zorder=1,\
-			label=r'NFW fit ($c=%.2f$)'%(c))
-			# label='NFW fit ($c=%.2f^{+%.2f}_{-%.2f}$)'%(c,c_err[1]-c,c-c_err[0]))
+			label=r'fit ($c=%.2f$)'%(c))
 		# ax.fill_between(x,\
-		# 	np.log10(nfw.m_diff(np.power(10.,x), c_err[0])),\
-		# 	np.log10(nfw.m_diff(np.power(10.,x), c_err[1])),
-		# 	color='C0', alpha=0.2, zorder=1,\
-		# 	label=r'NFW fit FWHM')
+		#		np.log10(einasto.m_diff(np.power(10.,x), c_err[0])),\
+		#		np.log10(einasto.m_diff(np.power(10.,x), c_err[1])),
+		#		color='C0', alpha=0.2, zorder=1,\
+		#		label=r'NFW fit FWHM')
 		[ax.plot(x, np.log10(_), color='grey', zorder=0) for _ in ps]
 		ax.plot(x[idx], np.log10(p[idx]),\
 			color='C1', marker='o', zorder=2,\
@@ -87,7 +91,7 @@ def prof(snap, reader, haloes, ax=None):
 			label=r'$r_s$')
 		ax.legend(loc='lower right')
 
-	return c
+	return c, a
 
 def cmh(snap, reader, haloes, F=0.1, ax=None):
 	"""Reads, calculates formation time of & plots CMHs of FoF haloes
@@ -110,7 +114,7 @@ def cmh(snap, reader, haloes, F=0.1, ax=None):
 
 	if ax is not None:
 		ax.set_xlabel(r'$\log_{10}(\rho_{crit}(z)/\rho_{crit}(z_0))$')
-		ax.set_ylabel(r'\log_{10}($\Sigma_i(M_{i,200})/M_{200}(z=z_0))$')
+		ax.set_ylabel(r'$\log_{10}(\Sigma_i(M_{i,200})/M_{200}(z=z_0))$')
 		[ax.plot(np.log10(rho), np.log10(_), color='grey') for _ in ms]
 		ax.plot(np.log10(rho), np.log10(m),\
 			color='C1', marker='o',\
@@ -132,19 +136,28 @@ def process(reader, snap, bin):
 	hs, mf, bins = halo_mf(snap, r)
 	hs = hs[hs['bin'] == bin]
 
-	c = prof(snap, reader, hs)
-	rho_s = np.log10(nfw.rho_enc(1.0/c, c))
-	F = nfw.Y(1.0)/nfw.Y(c)
-	rho_f = cmh(snap, reader, hs, F)
+	log.info('Snapshot %d, bin %d, %d haloes'%(snap, bin, len(hs)))
+
+	try:
+		c, a = prof(snap, reader, hs)
+		rho_s = np.log10(einasto.rho_enc(1.0/c, c, a))
+		F = einasto.m_enc(1.0/c, c, a)
+		try:
+			rho_f = cmh(snap, reader, hs, F)
+		except:
+			log.error('Unable to calculate formation time')
+	except:
+		log.error('Unable to fit density profile')
 
 	return rho_f, rho_s
 
 if __name__ == '__main__':
-	snaps = [51,78,93]
+	snaps = [51,61,78,93,122]
 	bins = range(1, 11)
-	r = HBTReader('./data/')
 
-	with open('./output/hbtp/rhof_rhos.csv','w') as f:
+	r = HBTReader('./data')
+
+	with open('./output/rhof_rhos.csv', 'w') as f:
 		f.write('snap,bin,rho_f,rho_s\n')
 		for snap in snaps:
 			for bin in bins:
@@ -152,4 +165,30 @@ if __name__ == '__main__':
 					rho_f, rho_s = process(r, snap, bin)
 					f.write('%d,%d,%f,%f\n'%(snap, bin, rho_f, rho_s))
 				except:
-					pass
+					log.info('Failed snapshot %d, bin %d'%(snap, bin))
+
+	# ds = np.genfromtxt('/gpfs/data/dc-oles1/merger_trees/output/gr/rhof_rhos.csv',\
+	ds = np.genfromtxt('./output/rhof_rhos.csv',\
+		delimiter=',', skip_header=1,\
+		dtype=np.dtype([\
+			('snap',int),\
+			('bin',int),\
+			('rho_f',float),\
+			('rho_s',float)\
+	]))
+
+	markers = [['o', None], ['.', None], ['^', None], ['x', None], ['*', None]]
+	for i,snap in enumerate(snaps):
+		for d in ds[ds['snap'] == snap]:
+			plt.scatter(d['rho_f'], d['rho_s'],\
+				color='C%d'%d['bin'], marker=markers[i][0])
+			markers[i][1] = plt.Line2D([], [], label='snap %d'%snap,\
+				color='k', marker=markers[i][0], linestyle='')
+
+	plt.xlabel(r'$\log_{10}(\rho_{crit}(z_{form})/\rho_{crit}(z_0))$')
+	plt.ylabel(r'$\log_{10}(\langle\rho_{s}\rangle/\rho_{crit}(z_0))$')
+	plt.xlim((0.2, 1.6))
+	plt.ylim((2.8,4.2))
+
+	plt.legend(handles=[markers[i][1] for i in range(len(markers))], loc='lower right')
+	plt.savefig('./plot.pdf')

@@ -52,7 +52,7 @@ class HBTReader:
 		config_file=subhalo_path+'/Parameters.log'
 		self.Options=ConfigReader(config_file).Options
 		self.rootdir=self.Options['SubhaloPath']
-		self.rootfofdir='./output/hbtp/HaloSize'
+		self.rootfofdir='./output/HaloSize'
 		self.MaxSnap=int(self.Options['MaxSnapshotIndex'])
 		self.BoxSize=float(self.Options['BoxSize'])
 		self.Softening=float(self.Options['SofteningHalo'])
@@ -374,14 +374,27 @@ class HBTReader:
 			%(HostHaloId, isnap, len(progenitors)))
 
 		if file is not None:
-			file.write("\t\"%d_%d\" [label=\"%d, %d, %.3f\"];\n"%\
-				(isnap, HostHaloId, isnap, HostHaloId, self.GetHostHalo(HostHaloId, isnap)['M200Crit']))
+			file.write("\t\"%d_%d\" [label=\"%d, %d\"];\n"%\
+				(isnap, HostHaloId, isnap, HostHaloId))
 			for progenitor in progenitors:
 				file.write("\t\"%d_%d\" -> \"%d_%d\";\n"%\
 					(isnap, HostHaloId, isnap-1, progenitor))
 
-		return [HostHalo(HostHaloId, self, isnap), [] if len(progenitors) == 0 else\
-			[self.GetMergerTree(progenitor, isnap-1, file) for progenitor in progenitors]]
+		return [(HostHaloId, isnap), []\
+			if len(progenitors) == 0 else\
+			[self.GetMergerTree(progenitor, isnap-1, file)\
+			for progenitor in progenitors]]
+
+	def GetHostProgenitors(self, HostHaloId, isnap=-1):
+		try:
+			subhaloes = self.GetSubsOfHost(HostHaloId, isnap=isnap)['TrackId']
+			result = np.unique([self.GetSub(subhalo, isnap=isnap-1)[0]['HostHaloId']\
+				for subhalo in subhaloes\
+				if self.GetSub(subhalo, isnap=isnap-1)[0]['Rank'] == 0])
+		except:
+			result = []
+		finally:
+			return result
 
 	def GetCollapsedMassHistory(self, HostHaloId, isnap=-1, NFW_f=0.01):
 		"""Calculates a CMH, starting at a FOF group
@@ -409,7 +422,7 @@ class HBTReader:
 			hosts.extend(hosts_of_track)
 		hosts = np.unique(np.array(hosts,\
 			dtype=np.dtype([('Snapshot', int), ('HaloId', int)])), axis=0)
-		hosts = hosts[hosts['HaloId'] != -1]
+		hosts = hosts[hosts['HaloId'] != 0]
 		ms = [self.GetHostHalo(host['HaloId'], host['Snapshot'])['M200Crit']\
 			for host in hosts]
 		hosts = append_fields(hosts, 'M200Crit', ms, usemask=False)
@@ -436,17 +449,6 @@ class HBTReader:
 			%(HostHaloId,isnap))
 
 		return cmh
-
-	def GetHostProgenitors(self, HostHaloId, isnap=-1):
-		try:
-			subhaloes = self.GetSubsOfHost(HostHaloId, isnap=isnap)['TrackId']
-			result = np.unique([self.GetSub(subhalo, isnap=isnap-1)[0]['HostHaloId']\
-				for subhalo in subhaloes\
-				if self.GetSub(subhalo, isnap=isnap-1)[0]['Rank'] == 0])
-		except:
-			result = []
-		finally:
-			return result
 
 	def GetHostProfile(self, selection=None, isnap=-1):
 		"""Returns normalised, binned particle positions of a FoF group"""

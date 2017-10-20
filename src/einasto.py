@@ -2,7 +2,7 @@
 import numpy as np
 from scipy.special import gammainc
 
-def rho_enc(x,c,a):
+def rho_enc(x, c, a):
 	"""<rho(x)>/rho_crit"""
 	return np.divide(\
 		200.0 * gammainc(3.0/a, (2.0/a)*np.power(c*x, a)),
@@ -24,7 +24,8 @@ def splmax(x, y, z):
 	from scipy.interpolate import interp2d
 	xi = np.linspace(np.min(x), np.max(x), 10*len(x))
 	yi = np.linspace(np.min(y), np.max(y), 10*len(y))
-	f = interp2d(x, y, z, kind='cubic'); zi = f(xi, yi)
+	f = interp2d(x, y, z, kind='cubic')
+	zi = f(xi, yi)
 	idx = np.unravel_index(np.argmax(zi), zi.shape)
 	return xi, yi, zi, idx
 
@@ -34,5 +35,5 @@ def fit(z, f, xs, ys, N=1):
 		[[np.sum(np.power(np.log(z) - np.log(f(x, y)), 2.0))\
 		for y in ys] for x in xs], N)
 	ls = np.exp(-chi2)
-	xi, yi, li, idx = splmax(xs, ys, ls)
-	return xi[idx[0]], yi[idx[1]]
+	x, y, l, idx = splmax(xs, ys, ls)
+	return x[idx[0]], y[idx[1]]

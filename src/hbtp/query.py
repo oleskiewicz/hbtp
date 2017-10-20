@@ -19,14 +19,14 @@ if __name__ == '__main__':
 
 	# filter small mass haloes
 	hosts = hosts[hosts['M200Crit'] >= 20]
-	# ids = hosts['HaloId']
+	ids = hosts['HaloId']
 
-	# filter orphan hosts
-	ids = list(filter(lambda id: len(reader.GetSubsOfHost(id,snap)) > 0,\
-		hosts['HaloId']))
+	# # filter orphan hosts
+	# ids = list(filter(lambda id: len(reader.GetSubsOfHost(id,snap)) > 0,\
+	# 	hosts['HaloId']))
 
 	log.info("Found %d haloes"%(len(ids)))
 
-	with open("./output/hbtp/ids-%03d.txt"%snap, 'w') as f:
+	with open("./output/ids-%03d.txt"%snap, 'w') as f:
 		for id in ids:
 			f.write("%d\n"%id)
