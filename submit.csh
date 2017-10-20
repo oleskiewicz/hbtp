@@ -44,16 +44,31 @@ set snap = 122
 # 	-J "profs_$snap" \
 # 	python -m src.hbtp.prof ${snap}
 
-# ################################################################################
-# # HBT+ -- CMHs                                                                 #
-# ################################################################################
-# foreach id (`more "./output/hbtp/ids-${snap}.txt"`)
-# 	bsub\
-# 		-P durham -n 1 -q cordelia \
-# 		-J "cmh_${snap}[${id}]%50" \
-# 		-oo ./log/log_%J.%I.txt -eo ./log/err_%J.%I.txt \
-# 		python -m src.hbtp.cmh ${snap} ${id}
-# end
+################################################################################
+# HBT+ -- CMHs                                                                 #
+################################################################################
+bsub \
+	-P durham -n 1 -q cordelia \
+	-J "cmh_${snap}_0" \
+	-We 6:00 \
+	-oo "./log/log_%J.0.txt" -eo "./log/err_%J.0.txt" \
+	python -m src.hbtp.cmh ${snap} 0
+foreach id (`head -n 20 "./output/ids-${snap}.txt" | tail -n 19`)
+	bsub \
+		-P durham -n 1 -q cordelia \
+		-J "cmh_${snap}[${id}]%50" \
+		-We 3:00 \
+		-oo ./log/log_%J.%I.txt -eo ./log/err_%J.%I.txt \
+		python -m src.hbtp.cmh ${snap} ${id}
+end
+foreach id (`tail -n 3689 "./output/ids-${snap}.txt"`)
+	bsub \
+		-P durham -n 1 -q cordelia \
+		-J "cmh_${snap}[${id}]%50" \
+		-We 1:00 \
+		-oo ./log/log_%J.%I.txt -eo ./log/err_%J.%I.txt \
+		python -m src.hbtp.cmh ${snap} ${id}
+end
 
 # ################################################################################
 # # HBT+ -- combine CMHs                                                         #

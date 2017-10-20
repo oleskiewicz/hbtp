@@ -4,49 +4,62 @@ from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 import matplotlib.pyplot as plt
 
+import logging
+from logging.config import fileConfig
+fileConfig("./log.conf")
+log = logging.getLogger()
+
 from src.hbtp.HBTReader import HBTReader
 from src import process
 
 if __name__ == '__main__':
-	snap = int(sys.argv[1])
-	host = int(sys.argv[2])
+	# snap = int(sys.argv[1])
+	host = int(sys.argv[1])
 	reader = HBTReader("./data/")
-	hosthalo = reader.LoadHostHalos(snap, selection=host)
 
-	fig = plt.figure()#figsize=plt.figaspect(0.5))
-	fig.suptitle("FoF group %d at snapshot %d"%(host, snap))
+	for snap in range(11, 79):
 
-	# left panel - 3D partile positions
-	ax = fig.add_subplot(1, 1, 1, projection='3d')
+		log.info("FoF group %d at snapshot %d"%(host, snap))
 
-	ax.set_xlim3d([-5,5])
-	ax.set_ylim3d([-5,5])
-	ax.set_zlim3d([-5,5])
+		# for angle in range(100,360):
+		fig = plt.figure()
+		# fig.suptitle("FoF group %d at snapshot %d"%(host, snap))
 
-	ax.view_init(30, 2*snap)
+		# # left panel - 3D partile positions
+		# ax = fig.add_subplot(1, 1, 1, projection='3d')
 
-	for trackId in reader.GetSubsOfHost(host, snap)['TrackId']:
-		positions = (reader.GetParticleProperties(trackId, snap)['ComovingPosition']\
-			- hosthalo['CenterComoving']) / hosthalo['R200CritComoving']
-		ax.scatter(positions[:, 0], positions[:, 1], positions[:, 2])
+		# ax.set_xlim3d([-5,5])
+		# ax.set_ylim3d([-5,5])
+		# ax.set_zlim3d([-5,5])
 
-	# # right panel - density profile
-	# ax = fig.add_subplot(1, 2, 2)
+		# ax.view_init(30, angle)#(2*snap))
 
-	# ax.set_xlabel("r")
-	# ax.set_ylabel("differential mass")
-	# ax.set_xlim([-2.75, 0.25])
-	# ax.set_ylim([-4.1, 0.1])
+		# for trackId in reader.GetSubsOfHost(host, snap)['TrackId']:
+		# 	positions = (reader.GetParticleProperties(trackId, snap)['ComovingPosition']\
+		# 		- hosthalo['CenterComoving']) / hosthalo['R200CritComoving']
+		# 	ax.scatter(positions[:, 0], positions[:, 1], positions[:, 2],\
+		# 		marker='.')
 
-	# prof, edges = reader.GetHostProfile(host, snap, bins=np.logspace(-2.5, 0.0, 33))
-	# prof = np.array(prof, dtype=np.float32)
-	# prof = np.cumsum(prof)
-	# prof = np.log10(np.divide(prof, prof[-1]))
-	# prof = process.normalise(prof)
+		# right panel - density profile
+		ax = fig.add_subplot(1, 1, 1)
 
-	# ax.plot(edges[1:], prof)
+		p = np.array(reader.GetHostProfile(host, snap)[0], dtype=np.float)
+		p = np.cumsum(p)
+		p = np.divide(p, p[-1])
+		x = np.linspace(-2.0, 0.0, 20)
 
-	# plt.tight_layout()
+		ax.set_xlabel(r'$\log_{10}(r/r_{200})$')
+		ax.set_ylabel(r'$\log_{10}(M(<r)/M_{200})$')
+		ax.set_xlim([-2.1, 0.1])
+		ax.set_ylim([-2.1, 0.1])
 
-	# fig.savefig("./plots/profile_%d_%03d.pdf"%(host,snap))
-	plt.show()
+		# prof = np.array(prof, dtype=np.float32)
+		# prof = np.cumsum(prof)
+		# prof = np.log10(np.divide(prof, prof[-1]))
+		# # prof = process.normalise(prof)
+
+		ax.plot(x, np.log10(p))
+
+		# plt.tight_layout()
+
+		fig.savefig('./plots/profile_%03d_%02d.png'%(host,snap))

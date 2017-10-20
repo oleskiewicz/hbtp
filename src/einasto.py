@@ -2,7 +2,7 @@
 import numpy as np
 from scipy.special import gammainc
 
-def rho_enc(x,c,a):
+def rho_enc(x, c, a):
 	"""<rho(x)>/rho_crit"""
 	return np.divide(\
 		200.0 * gammainc(3.0/a, (2.0/a)*np.power(c*x, a)),
@@ -21,23 +21,19 @@ def m(x, c, a):
 	return y
 
 def splmax(x, y, z):
-	from scipy.interpolate import griddata
-	xy = np.transpose([np.tile(x, len(y)), np.repeat(y, len(x))])
-	grid_x, grid_y = np.meshgrid(\
-		np.linspace(np.min(x),np.max(x), len(x)*10),
-		np.linspace(np.min(y),np.max(y), len(y)*10))
-	grid_z = griddata(xy, z, (grid_x, grid_y), method='cubic')
-	idx = np.unravel_index(np.argmax(interpolated_z), interpolated_z.shape)
-	return xy[idx[1]], xy[idx[0]], grid_z[idx]
+	from scipy.interpolate import interp2d
+	xi = np.linspace(np.min(x), np.max(x), 10*len(x))
+	yi = np.linspace(np.min(y), np.max(y), 10*len(y))
+	f = interp2d(x, y, z, kind='cubic')
+	zi = f(xi, yi)
+	idx = np.unravel_index(np.argmax(zi), zi.shape)
+	return xi, yi, zi, idx
 
 def fit(z, f, xs, ys, N=1):
+	"""Maximise likelihood :math:`L = e^{-\chi^2}`"""
 	chi2 = np.divide(\
 		[[np.sum(np.power(np.log(z) - np.log(f(x, y)), 2.0))\
-		for x in xs] for y in ys], N)
+		for y in ys] for x in xs], N)
 	ls = np.exp(-chi2)
-	x, y, l = splmax(xs, ys, ls)
-	return x, y
-
-# c, a = fit(p, lambda c, a: m(np.power(10.0,x), c, a),\
-# 		np.linspace(1.0, 10.0, 10), np.linspace(0.1, 1.0, 10))
-
+	x, y, l, idx = splmax(xs, ys, ls)
+	return x[idx[0]], y[idx[1]]

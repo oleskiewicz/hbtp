@@ -57,7 +57,7 @@ def forge(data):
 		index='HaloId')
 
 if __name__ == '__main__':
-	f = "./output/hbtp/cmh-%03d.csv"%(int(sys.argv[1]))
+	f = "./output/cmh-%03d.csv"%(int(sys.argv[1]))
 	long = pd.read_csv(f, sep=",")
 	wide = forge(long)
 	wide.to_csv(f, sep=",")
