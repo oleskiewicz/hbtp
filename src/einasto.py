@@ -36,4 +36,4 @@ def fit(z, f, xs, ys, N=1):
 		for y in ys] for x in xs], N)
 	ls = np.exp(-chi2)
 	x, y, l, idx = splmax(xs, ys, ls)
-	return x[idx[0]], y[idx[1]]
+	return x[idx[0]], y[idx[1]], 0.0-np.log(l[idx[0], idx[1]])

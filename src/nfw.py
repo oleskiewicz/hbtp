@@ -42,4 +42,4 @@ def fit(y, f, xs, N=1):
 	# ls = np.divide(ls, l)
 	# x_err = spline(xs, ls-1.5).roots()           #FWHM
 	# x_err = (x-3.0*np.std(ls), x+3.0*np.std(ls)) #+/-3sigma
-	return x[idx]
+	return x[idx], 0.0-np.log(l[idx])

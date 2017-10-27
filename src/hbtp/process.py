@@ -64,7 +64,7 @@ def prof(snap, reader, haloes, ax=None):
 	ps = np.divide(ps.T, np.sum(ps, axis=1)).T
 	p = np.median(ps, axis=0)
 
-	c, a = einasto.fit(\
+	c, a, chi2 = einasto.fit(\
 		p,
 		lambda c, a: einasto.m(np.power(10,x), c, a),\
 		np.linspace(1.0, 10.0, 100),\
@@ -74,12 +74,12 @@ def prof(snap, reader, haloes, ax=None):
 	if ax is not None:
 		ax.set_xlabel(r'$\log_{10}(r/r_{200})$')
 		ax.set_ylabel(r'$\log(M(r)/M(r<r_{200}))$')
-		ax.plot(x[idx], np.log10(einasto.m(np.power(10,x), c)[idx]),\
+		ax.plot(x[idx], np.log10(einasto.m(np.power(10,x), c, a)[idx]),\
 			color='C0', linewidth=4, zorder=1,\
 			label=r'fit ($c=%.2f$)'%(c))
 		# ax.fill_between(x,\
-		#		np.log10(einasto.m_diff(np.power(10.,x), c_err[0])),\
-		#		np.log10(einasto.m_diff(np.power(10.,x), c_err[1])),
+		#		np.log10(nfw.m_diff(np.power(10.,x), c_err[0])),\
+		#		np.log10(nfw.m_diff(np.power(10.,x), c_err[1])),
 		#		color='C0', alpha=0.2, zorder=1,\
 		#		label=r'NFW fit FWHM')
 		[ax.plot(x, np.log10(_), color='grey', zorder=0) for _ in ps]
@@ -157,7 +157,7 @@ if __name__ == '__main__':
 
 	r = HBTReader('./data')
 
-	with open('./output/rhof_rhos.csv', 'w') as f:
+	with open('./output/einasto.csv', 'w') as f:
 		f.write('snap,bin,rho_f,rho_s\n')
 		for snap in snaps:
 			for bin in bins:
@@ -167,8 +167,7 @@ if __name__ == '__main__':
 				except:
 					log.info('Failed snapshot %d, bin %d'%(snap, bin))
 
-	# ds = np.genfromtxt('/gpfs/data/dc-oles1/merger_trees/output/gr/rhof_rhos.csv',\
-	ds = np.genfromtxt('./output/rhof_rhos.csv',\
+	ds = np.genfromtxt('./output/einasto.csv',\
 		delimiter=',', skip_header=1,\
 		dtype=np.dtype([\
 			('snap',int),\
@@ -190,5 +189,5 @@ if __name__ == '__main__':
 	plt.xlim((0.2, 1.6))
 	plt.ylim((2.8,4.2))
 
-	plt.legend(handles=[markers[i][1] for i in range(len(markers))], loc='lower right')
-	plt.savefig('./plot.pdf')
+	plt.legend(handles=[markers[i][1] for i in range(len(snaps))], loc='lower right')
+	plt.savefig('./einasto.pdf')
