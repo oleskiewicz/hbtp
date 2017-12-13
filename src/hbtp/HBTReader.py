@@ -52,7 +52,6 @@ class HBTReader:
 		config_file=subhalo_path+'/Parameters.log'
 		self.Options=ConfigReader(config_file).Options
 		self.rootdir=self.Options['SubhaloPath']
-		self.rootfofdir='./output/HaloSize'
 		self.MaxSnap=int(self.Options['MaxSnapshotIndex'])
 		self.BoxSize=float(self.Options['BoxSize'])
 		self.Softening=float(self.Options['SofteningHalo'])
@@ -104,7 +103,7 @@ class HBTReader:
 			return self.rootdir+'/%03d/'%isnap+filetype+'Snap_%03d.%d.hdf5'%(isnap, ifile)
 		else:
 			if filetype == 'HaloSize':
-				return "%s/%s_%03d.hdf5"%(self.rootfofdir, filetype, isnap)
+				return self.rootdir+'%s/%s_%03d.hdf5'%(filetype, filetype, isnap)
 			else:
 				return self.rootdir+'/'+filetype+'Snap_%03d.hdf5'%(isnap)
 

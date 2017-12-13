@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import numpy as np
 from scipy.special import gammainc
+from scipy.interpolate import interp2d
 
 def rho_enc(x, c, a):
 	"""<rho(x)>/rho_crit"""
@@ -21,7 +22,6 @@ def m(x, c, a):
 	return y
 
 def splmax(x, y, z):
-	from scipy.interpolate import interp2d
 	xi = np.linspace(np.min(x), np.max(x), 10*len(x))
 	yi = np.linspace(np.min(y), np.max(y), 10*len(y))
 	f = interp2d(x, y, z, kind='cubic')
@@ -29,11 +29,11 @@ def splmax(x, y, z):
 	idx = np.unravel_index(np.argmax(zi), zi.shape)
 	return xi, yi, zi, idx
 
-def fit(z, f, xs, ys, N=1):
+def fit(z, f, xs, ys, N=None):
 	"""Maximise likelihood :math:`L = e^{-\chi^2}`"""
 	chi2 = np.divide(\
 		[[np.sum(np.power(np.log(z) - np.log(f(x, y)), 2.0))\
-		for y in ys] for x in xs], N)
+		for y in ys] for x in xs], len(z)-2 if N is None else N)
 	ls = np.exp(-chi2)
 	x, y, l, idx = splmax(xs, ys, ls)
 	return x[idx[0]], y[idx[1]], 0.0-np.log(l[idx[0], idx[1]])

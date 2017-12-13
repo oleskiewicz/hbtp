@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import numpy as np
+from scipy.interpolate import InterpolatedUnivariateSpline as spline
 
 def Y(u):
 	return np.log(1.0+u) - np.divide(u, (1.0+u))
@@ -26,17 +27,18 @@ def m(x,c):
 	return y
 
 def splmax(x, y):
-	from scipy.interpolate import InterpolatedUnivariateSpline as spline
 	f = spline(x, y)
 	xi = np.linspace(np.min(x), np.max(x), 10*len(x))
 	yi = f(xi)
 	idx = np.argmax(yi)
 	return xi, yi, idx
 
-def fit(y, f, xs, N=1):
+def fit(y, f, xs, N=None):
+	"""Maximise likelihood :math:`L = e^{-\chi^2}`"""
+	# degrees of freedom minus parameters
 	chi2 = np.divide(\
 		[np.sum(np.power(np.log(y) - np.log(f(x)), 2.0))\
-		for x in xs], N)
+		for x in xs], len(y)-1 if N is None else N)
 	ls = np.exp(-chi2)
 	x, l, idx = splmax(xs, ls)
 	# ls = np.divide(ls, l)
