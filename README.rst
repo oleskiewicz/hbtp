@@ -114,7 +114,7 @@ Directory
   │   ├── plot.py
   │   ├── query.py
   │   ├── read.py
-  │   ├── tree.py
+  │   └── tree.py
   ├── submit.csh
   ├── submit_array.csh
   └── tags
