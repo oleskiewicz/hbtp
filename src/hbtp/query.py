@@ -15,13 +15,13 @@ if __name__ == '__main__':
 
 	log.info("Loading snapshot %d"%(snap))
 
-	hosts = reader.LoadHostHalos(snap)[['HaloId','R200CritComoving','M200Crit']]
+	hosts = reader.LoadHostHalos(snap)
 
-	# filter small mass haloes
-	hosts = hosts[hosts['M200Crit'] >= 20]
+	# small mass haloes & relaxed
+	hosts = hosts[(hosts['M200Crit'] >= 20) & (hosts['CenterOffset'] >= 0.1)]
 	ids = hosts['HaloId']
 
-	# # filter orphan hosts
+	# # filter orphan hosts - redundant
 	# ids = list(filter(lambda id: len(reader.GetSubsOfHost(id,snap)) > 0,\
 	# 	hosts['HaloId']))
 

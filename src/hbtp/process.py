@@ -10,90 +10,75 @@ fileConfig("./log.conf")
 log = logging.getLogger()
 
 from src.hbtp.HBTReader import HBTReader
+from src.hbtp import plot
 from src import read
 from src import cosmology
 from src import einasto
+from src import nfw
 
-def subhalo_mf(snap, reader, ax=None):
+def mf(reader, snap, nbins, bin=0, ax=None):
+	"""Selects, bins & bins FoF haloes into 10 log-spaced bins
+	"""
+	haloes = reader.LoadHostHalos(snap)
+	haloes = haloes[\
+		(haloes['M200Crit'] >= 20) &\
+		(haloes['CenterOffset'] >= 0.1)]
+	haloes['M200Crit'] = 1e10*haloes['M200Crit']
+
+	counts, bin_edges = np.histogram(np.log10(haloes['M200Crit']), nbins)
+	haloes = np.lib.recfunctions.append_fields(haloes, 'bin',\
+		np.digitize(np.log10(haloes['M200Crit']), bin_edges),\
+		usemask=False)
+	bins = 0.5*(bin_edges[1:] + bin_edges[:-1])
+
+	if ax is not None:
+		ax.plot(bins, np.log10(counts), marker='.')
+		if bin != 0:
+			ax.axvspan(bin_edges[bin-1], bin_edges[bin], alpha=0.5)
+
+	return haloes, counts, bins
+
+def smf(reader, snap, ax=None):
 	"""Selects, bins & bins subhaloes into 20 log-spaced bins
 	"""
-	ss = reader.LoadSubhalos(snap)
-	ss = ss[(ss['HostHaloId'] != -1) & (ss['BoundM200Crit'] > 0.0)& (ss['Nbound'] >= 20)]
+	subhaloes = reader.LoadSubhalos(snap)
+	subhaloes = subhaloes[\
+		(subhaloes['HostHaloId'] != -1) &\
+		(subhaloes['BoundM200Crit'] > 0.0) &\
+		(subhaloes['Nbound'] >= 20)]
 
-	counts, bin_edges = np.histogram(np.log10(ss['BoundM200Crit']), 20)
-	ss = np.lib.recfunctions.append_fields(ss, 'bin',\
-		np.digitize(np.log10(ss['BoundM200Crit']), bin_edges),\
+	counts, bin_edges = np.histogram(np.log10(subhaloes['BoundM200Crit']), 20)
+	subhaloes = np.lib.recfunctions.append_fields(subhaloes, 'bin',\
+		np.digitize(np.log10(subhaloes['BoundM200Crit']), bin_edges),\
 		usemask=False)
 	bins = 0.5*(bin_edges[1:] + bin_edges[:-1])
 
 	if ax is not None:
 		ax.plot(bins, np.log10(counts), marker='.')
 	
-	return ss, counts
+	return subhaloes, counts, bins
 
-def halo_mf(snap, reader, nbins, ax=None):
-	"""Selects, bins & bins FoF haloes into 10 log-spaced bins
-	"""
-	hs = reader.LoadHostHalos(snap)\
-		[['HaloId', 'R200CritComoving', 'M200Crit', 'CenterOffset']]
-	hs = hs[(hs['M200Crit'] >= 20) & (hs['CenterOffset'] >= 0.1)]
-	hs['M200Crit'] = 1e10*hs['M200Crit']
-
-	counts, bin_edges = np.histogram(np.log10(hs['M200Crit']), nbins)
-	hs = np.lib.recfunctions.append_fields(hs, 'bin',\
-		np.digitize(np.log10(hs['M200Crit']), bin_edges),\
-		usemask=False)
-	bins = 0.5*(bin_edges[1:] + bin_edges[:-1])
-
-	if ax is not None:
-		ax.plot(bins, np.log10(counts), marker='.')
-		ax.axvspan(bin_edges[bin-1], bin_edges[bin], color='grey', alpha=0.5)
-
-	return hs, counts, bins
-
-def prof(reader, snap, haloes, ax=None):
+def prof(haloes):
 	"""Reads, fits & plots binned particle profiles for FoF haloes
 	"""
-	ps = np.array(\
-		reader.LoadHostHalos(snap, [list(haloes['HaloId']),])['Profile'],\
-		dtype=np.float)
-	xmin = 0.5 * np.cbrt((4.0*np.pi)/(3.0*np.sum(np.median(ps, axis=0))))
+	ps = np.array(haloes['Profile'], dtype = np.float)
+	xmin = 0.5 * np.cbrt((4.0 * np.pi) / (3.0 * np.sum(np.median(ps, axis = 0))))
 	xmax = 0.8
 	x = np.linspace(-2.0, 0.0, 20)
-	idx = np.where((np.power(10,x) < xmax) & (np.power(10,x) > xmin))
+	idx = np.where((np.power(10, x) < xmax) & (np.power(10, x) > xmin))
 
-	ps = np.divide(ps.T, np.sum(ps, axis=1)).T
+	ps = np.divide(ps.T, np.sum(ps, axis = 1)).T
 	p = np.median(ps, axis=0)
 
-	c, a, chi2 = einasto.fit(\
+	c, chi2 = nfw.fit(\
 		p,
-		lambda c, a: einasto.m(np.power(10,x), c, a),\
-		np.linspace(1.0, 10.0, 100),\
-		np.linspace(0.01, 0.99, 100))
+		lambda c: nfw.m(np.power(10, x), c),\
+		np.linspace(1.0, 10.0, 100))
 
-	if ax is not None:
-		ax.set_xlabel(r'$\log_{10}(r/r_{200})$')
-		ax.set_ylabel(r'$\log(M(r)/M(r<r_{200}))$')
-		ax.plot(x[idx], np.log10(einasto.m(np.power(10,x), c, a)[idx]),\
-			color='C0', linewidth=4, zorder=1,\
-			label=r'fit ($c=%.2f$)'%(c))
-		# ax.fill_between(x,\
-		#		np.log10(nfw.m_diff(np.power(10.,x), c_err[0])),\
-		#		np.log10(nfw.m_diff(np.power(10.,x), c_err[1])),
-		#		color='C0', alpha=0.2, zorder=1,\
-		#		label=r'NFW fit FWHM')
-		[ax.plot(x, np.log10(_), color='grey', zorder=0) for _ in ps]
-		ax.plot(x[idx], np.log10(p[idx]),\
-			color='C1', marker='o', zorder=2,\
-			label='average density profile')
-		ax.axvline(np.log10(1.0/c), color='C0',\
-			linestyle='--',\
-			label=r'$r_s$')
-		ax.legend(loc='lower right')
+	return c, idx, x, np.log10(p),\
+		np.log10(nfw.m(np.power(10, x), c)), np.log10(ps)
 
-	return c, a
-
-def cmh(reader, snap, haloes, F=0.1, ax=None):
+def cmh(snap, haloes, F=0.1):
 	"""Reads, calculates formation time of & plots CMHs of FoF haloes
 	"""
 	ms = np.array(read.cmh(snap).loc[haloes['HaloId']], dtype=np.float)
@@ -112,91 +97,77 @@ def cmh(reader, snap, haloes, F=0.1, ax=None):
 	x1, x2 = rho[m > m_f][0], rho[m < m_f][-1]
 	rho_f = (np.log10(x1/x2)/np.log10(y1/y2))*(np.log10(m_f/y1))+np.log10(x1)
 
-	if ax is not None:
-		ax.set_xlabel(r'$\log_{10}(\rho_{crit}(z)/\rho_{crit}(z_0))$')
-		ax.set_ylabel(r'$\log_{10}(\Sigma_i(M_{i,200})/M_{200}(z=z_0))$')
-		[ax.plot(np.log10(rho), np.log10(_), color='grey') for _ in ms]
-		ax.plot(np.log10(rho), np.log10(m),\
-			color='C1', marker='o',\
-			label='average CMH')
-		ax.axhline(np.log10(m_f),\
-			color='C0', linestyle='-.',
-			label=r'formation threshold $F = %.2f$'%F)
-		ax.axvline(rho_f,\
-			color='C0', linestyle='--',\
-			label=r'formation time $\rho_{crit} = %.2f$'%rho_f)
-		ax.legend(loc='lower left')
+	return np.log10(rho), np.log10(m), rho_f, np.log10(m_f), np.log10(ms)
 
-	return rho_f
-
-def process(reader, snap, hs, bin):
+def process(snap, hs, bin):
 	zs = read.snaps()
 	z0 = zs[zs['Snapshot'] == snap][0]['Redshift']
 
-	# hs, mf, bins = halo_mf(snap, reader)
 	hs = hs[hs['bin'] == bin]
 
 	log.info('Snapshot %d, bin %d, %d haloes'%(snap, bin, len(hs)))
 
+	# rho_f = -1.0
+	# rho_s = -1.0
 	try:
-		c, a = prof(reader, snap, hs)
-		rho_s = np.log10(einasto.rho_enc(1.0/c, c, a))
-		F = einasto.m_enc(1.0/c, c, a)
-		try:
-			rho_f = cmh(reader, snap, hs, F)
-		except:
-			log.error('Unable to calculate formation time')
-			rho_f = -1.0
+		c, _, _, _, _, _ = prof(hs)
+		# rho_s = np.log10(nfw.rho_enc(1.0/c, c))
+		# F = nfw.m_enc(1.0/c, c)
+		# try:
+		# 	_, _, rho_f, _, _ = cmh(snap, hs, F)
+		# except:
+		# 	log.error('Unable to calculate formation time')
 	except:
 		log.error('Unable to fit density profile')
-		c = -1.0
 
-	# return rho_f, rho_s
-	return c, rho_f
+	return c
 
-def concentration_mass(reader, snap, ax=None):
+def concentration_mass(snap, nbins):
 	"""Plots concentration mass relation at a given snapshot
 	"""
+	hs, _, m = mf(r, snap, nbins)
+	c = np.log10([process(snap, hs, bin) for bin in range(1, nbins+1)])
+	m = m[c != -1.0]
+	c = c[c != -1.0]
 
-	hs, _, m = halo_mf(snap, reader, 10)
-	c = np.array([np.log10(prof(reader, snap, hs[hs['bin'] == bin]))\
-		for bin in range(1,11)]).T
-
-	# if ax is not None:
-	# 	ax.set_xlabel(r'$\log_{10}M_{200}$')
-	# 	ax.set_ylabel(r'$\log_{10}c_{200}$')
-	# 	ax.plot(m, c[0], '.')
-
-	return c[0], c[1], m
-
-def formation_mass(reader, snap, ax=None):
-	"""Plots concentration mass relation at a given snapshot
-	"""
-
-	hs, _, m = halo_mf(snap, reader, 10)
-	c = concentration_mass(reader, snap)
-	
-	rho_f = cmh(reader, snap, hs, einasto.m_enc(np.divide(1.0, c[0]), c[0], c[1]))
-
-	# if ax is not None:
-	# 	ax.set_xlabel(r'$\log_{10}M_{200}$')
-	# 	ax.set_ylabel(r'$\log_{10}rho_{f}$')
-	# 	ax.plot(m, rho_f, '.')
-
-	return rho_f, m
+	return m, c
 
 if __name__ == '__main__':
-	nbins = 5
 	snap = int(sys.argv[1])
 	r = HBTReader('./data')
+	nbins = 20
+	bin = 8
 
-	hs, _, m = halo_mf(snap, r, nbins)
-	print [process(r, snap, hs, bin) for bin in range(1, nbins+1)]
+	fig, ax = plt.subplots(1)
+	fig.suptitle('snapshot = %d'%snap)
+
+	m, c = concentration_mass(snap, nbins)
+	plot.concentration_mass(ax, m, c)
+
+	# hs, _, m = mf(r, snap, nbins)
+
+	# c, idx, x, y_med, y_fit, ys = prof(hs[hs['bin'] == bin])
+	# plot.prof(ax,\
+	# 	idx,\
+	# 	x,\
+	# 	y_med,\
+	# 	y_fit,\
+	# 	ys)
+
+	# x, y_med, x_fit, y_fit, ys = cmh(snap, hs[hs['bin'] == bin], 0.1)
+	# plot.cmh(ax,\
+	# 	x,\
+	# 	y_med,\
+	# 	x_fit,\
+	# 	y_fit,\
+	# 	ys)
+
+	plt.show()
 
 	# with open('./output/einasto.csv', 'w') as f:
 	# 	f.write('snap,bin,rho_f,rho_s\n')
 	# 	for snap in [51,61,78,93,122]:
-	# 		hs, _, bins = halo_mf(snap, r, nbins)
+	# 		hs, _, bins = mf(r, snap, nbins)
 	# 		for bin in range(1, nbins+1):
 	# 			try:
 	# 				rho_f, rho_s = process(r, snap, hs, bin)
