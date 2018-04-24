@@ -109,12 +109,12 @@ class HBTReader:
             self.MinSnap = 0
 
         try:
-            with self.Open(-1) as file:
+            with self.OpenFile(-1) as file:
                 self.ParticleMass = file['/Cosmology/ParticleMass'][0]
         except:
             logging.error("Failed to get ParticleMass")
 
-        with self.Open(-1) as file:
+        with self.OpenFile(-1) as file:
             self.OmegaM0 = file['/Cosmology/OmegaM0'][0]
             self.OmegaLambda0 = file['/Cosmology/OmegaLambda0'][0]
 
@@ -138,7 +138,10 @@ class HBTReader:
             return self.rootdir + '/%03d/' % isnap + filetype + 'Snap_%03d.%d.hdf5' % (
                 isnap, ifile)
         else:
-            return self.rootdir + '/' + filetype + 'Snap_%03d.hdf5' % (isnap)
+						if filetype == 'HaloSize':
+								return self.rootdir + '/HaloSize/' + 'HaloSize_%03d.hdf5' % (isnap)
+						else:
+								return self.rootdir + '/' + filetype + 'Snap_%03d.hdf5' % (isnap)
 
     def OpenFile(self, isnap, ifile=0, filetype='Sub', mode='r'):
         """Opens HDF5 file.
@@ -395,7 +398,7 @@ class HBTReader:
         if type(selection) is list:
             selection = tuple(selection)
 
-        with self.Open(isnap, filetype="HaloSize") as hostfile:
+        with self.OpenFile(isnap, filetype="HaloSize") as hostfile:
             nsub = hostfile["HostHalos"].shape[0]
             if trans_index:
                 if offset + nsub > selection:
@@ -444,7 +447,7 @@ class HBTReader:
             (numpy.ndarray): array of ``TrackIds``, or empty array if FoF does
                 not host subhalos
         """
-        with self.Open(isnap) as subfile:
+        with self.OpenFile(isnap) as subfile:
             trackIds = subfile['Membership/GroupedTrackIds'][HostHaloId]
 
         try:
