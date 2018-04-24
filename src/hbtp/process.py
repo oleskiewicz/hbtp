@@ -55,7 +55,7 @@ def smf(reader, snap, ax=None):
 
 	if ax is not None:
 		ax.plot(bins, np.log10(counts), marker='.')
-	
+
 	return subhaloes, counts, bins
 
 def prof(haloes):
@@ -122,10 +122,10 @@ def process(snap, hs, bin):
 
 	return c
 
-def concentration_mass(snap, nbins):
+def concentration_mass(reader, snap, nbins):
 	"""Plots concentration mass relation at a given snapshot
 	"""
-	hs, _, m = mf(r, snap, nbins)
+	hs, _, m = mf(reader, snap, nbins)
 	c = np.log10([process(snap, hs, bin) for bin in range(1, nbins+1)])
 	m = m[c != -1.0]
 	c = c[c != -1.0]
@@ -141,10 +141,10 @@ if __name__ == '__main__':
 	fig, ax = plt.subplots(1)
 	fig.suptitle('snapshot = %d'%snap)
 
-	m, c = concentration_mass(snap, nbins)
-	plot.concentration_mass(ax, m, c)
+	# m, c = concentration_mass(r, snap, nbins)
+	# plot.concentration_mass(ax, m, c)
 
-	# hs, _, m = mf(r, snap, nbins)
+	hs, _, m = mf(r, snap, nbins)
 
 	# c, idx, x, y_med, y_fit, ys = prof(hs[hs['bin'] == bin])
 	# plot.prof(ax,\
@@ -154,13 +154,13 @@ if __name__ == '__main__':
 	# 	y_fit,\
 	# 	ys)
 
-	# x, y_med, x_fit, y_fit, ys = cmh(snap, hs[hs['bin'] == bin], 0.1)
-	# plot.cmh(ax,\
-	# 	x,\
-	# 	y_med,\
-	# 	x_fit,\
-	# 	y_fit,\
-	# 	ys)
+	x, y_med, x_fit, y_fit, ys = cmh(snap, hs[hs['bin'] == bin], 0.1)
+	plot.cmh(ax,\
+		x,\
+		y_med,\
+		x_fit,\
+		y_fit,\
+		ys)
 
 	plt.show()
 

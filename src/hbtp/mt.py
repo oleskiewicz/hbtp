@@ -20,7 +20,7 @@ if __name__ == '__main__':
 	log.info("Halo %d at snapshot %d"%(host0,snap0))
 
 	# Dot merger tree
-	with open("./output/hbtp/mt_%03d_%d.dot"%(snap0, host0), 'w') as f:
+	with open("./output/mt_%03d_%d.dot"%(snap0, host0), 'w') as f:
 		f.write("digraph {\n")
 		t = reader.GetMergerTree(host0, snap0, f)
 		f.write("}\n")

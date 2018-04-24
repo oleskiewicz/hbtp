@@ -104,7 +104,7 @@ if __name__ == '__main__':
 	bin = 10
 
 	fig, ax = plt.subplots(1)
-	hs, _, m = mf(r, snap, nbins)
+	hs, _, m = mf(ax, snap, nbins)
 	_ = cmh(snap, hs[hs['bin'] == bin], ax = ax)
 	# _ = concentration_mass(r, snap, nbins, ax)
 	plt.show()
