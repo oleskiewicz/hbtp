@@ -1,17 +1,22 @@
 #!/usr/bin/env python
-import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import logging
 
-from src.hbtp.HBTReader import HBTReader
-from src import process
+import util
+from HBTReader import HBTReader
 
-if __name__ == '__main__':
-    # snap = int(sys.argv[1])
-    host = int(sys.argv[1])
-    reader = HBTReader("./data/")
+
+def main(grav, snap, host, save=False):
+    """Plot 3D particles belonging to host halo
+
+    :param str grav: Gravity (GR_b64n512 or fr6_b64n512)
+    :param int snap: Snapshot number (between 122 and 10)
+    :param int host: Host halo ID
+    :param bool save: save figure to file?
+    """
+    reader = HBTReader("./data/%s/subcat" % grav)
 
     for snap in range(11, 79):
 
@@ -31,10 +36,10 @@ if __name__ == '__main__':
         # ax.view_init(30, angle)#(2*snap))
 
         # for trackId in reader.GetSubsOfHost(host, snap)['TrackId']:
-        # 	positions = (reader.GetParticleProperties(trackId, snap)['ComovingPosition']\
-        # 		- hosthalo['CenterComoving']) / hosthalo['R200CritComoving']
-        # 	ax.scatter(positions[:, 0], positions[:, 1], positions[:, 2],\
-        # 		marker='.')
+        #   positions = (reader.GetParticleProperties(trackId, snap)['ComovingPosition']\
+        #     - hosthalo['CenterComoving']) / hosthalo['R200CritComoving']
+        #   ax.scatter(positions[:, 0], positions[:, 1], positions[:, 2],\
+        #     marker='.')
 
         # right panel - density profile
         ax = fig.add_subplot(1, 1, 1)
@@ -52,10 +57,17 @@ if __name__ == '__main__':
         # prof = np.array(prof, dtype=np.float32)
         # prof = np.cumsum(prof)
         # prof = np.log10(np.divide(prof, prof[-1]))
-        # # prof = process.normalise(prof)
+        # # prof = util.normalise(prof)
 
         ax.plot(x, np.log10(p))
 
         # plt.tight_layout()
 
-        fig.savefig('./plots/profile_%03d_%02d.png' % (host, snap))
+        if save:
+            fig.savefig('./plots/profile.%s.%03d_%d.png' % (grav, snap, host))
+        else:
+            plt.show()
+
+
+if __name__ == '__main__':
+    defopt.run(main, strict_kwonly=False)

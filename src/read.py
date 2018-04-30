@@ -10,21 +10,14 @@ def snaps():
     return d
 
 
-def prof(snap):
-    d = pd.read_csv("./output/prof-%03d.csv" % snap)
+def cmh(grav, snap):
+    d = pd.read_csv("./output/cmh.%s.%03d.csv" % (grav, snap))
     d.set_index('HaloId', inplace=True)
     d.fillna(0.0, inplace=True)
     return d
 
 
-def cmh(snap):
-    d = pd.read_csv("./output/cmh-%03d.csv" % snap)
-    d.set_index('HaloId', inplace=True)
-    d.fillna(0.0, inplace=True)
-    return d
-
-
-def ids(snap):
-    with open("./output/ids-%03d.txt" % snap, 'r') as f:
-        ids = map(lambda id: int(id.strip()), f.readlines())
+def ids(grav, snap):
+    with open("./output/ids.%s.%03d.csv" % (grav, snap), "r") as f:
+        ids = list(map(lambda id: int(id.strip()), f.readlines()))
     return ids
