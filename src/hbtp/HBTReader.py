@@ -2,10 +2,10 @@
 import sys
 import glob
 import numbers
+import logging
 import numpy as np
 import h5py
 from numpy.lib.recfunctions import append_fields
-import logging
 
 
 def PeriodicDistance(x, y, BoxSize, axis=-1):

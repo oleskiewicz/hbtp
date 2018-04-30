@@ -2,8 +2,9 @@
 import sys
 import pandas as pd
 
+
 def forge(data):
-	"""Un-melts (forges) the DataFrame from long format to a wide one
+    """Un-melts (forges) the DataFrame from long format to a wide one
 
 	In essence, we want to go from
 
@@ -51,13 +52,14 @@ def forge(data):
 	Returns:
 		pandas.DataFrame: output CMH DataFrame in a wide format
 	"""
-	return data.pivot_table(\
-		values='M200Crit',\
-		columns='Snapshot',
-		index='HaloId')
+    return data.pivot_table(\
+     values='M200Crit',\
+     columns='Snapshot',
+     index='HaloId')
+
 
 if __name__ == '__main__':
-	f = "./output/cmh-%03d.csv"%(int(sys.argv[1]))
-	long = pd.read_csv(f, sep=",")
-	wide = forge(long)
-	wide.to_csv(f, sep=",")
+    f = "./output/cmh-%03d.csv" % (int(sys.argv[1]))
+    long = pd.read_csv(f, sep=",")
+    wide = forge(long)
+    wide.to_csv(f, sep=",")

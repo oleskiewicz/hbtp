@@ -1,6 +1,3 @@
-ipython
-notebook
-jupyterthemes
 h5py
 numpy
 scipy

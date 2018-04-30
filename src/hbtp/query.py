@@ -1,32 +1,28 @@
 #!/usr/bin/env python
 import sys
+import logging
 import numpy as np
 
 from HBTReader import HBTReader
 
-import logging
-from logging.config import fileConfig
-fileConfig("./log.conf")
-log = logging.getLogger()
-
 if __name__ == '__main__':
-	snap = int(sys.argv[1])
-	reader = HBTReader("./data/")
+    snap = int(sys.argv[1])
+    reader = HBTReader("./data/")
 
-	log.info("Loading snapshot %d"%(snap))
+    logging.info("Loading snapshot %d" % (snap))
 
-	hosts = reader.LoadHostHalos(snap)
+    hosts = reader.LoadHostHalos(snap)
 
-	# small mass haloes & relaxed
-	hosts = hosts[(hosts['M200Crit'] >= 20) & (hosts['CenterOffset'] >= 0.1)]
-	ids = hosts['HaloId']
+    # small mass haloes & relaxed
+    hosts = hosts[(hosts['M200Crit'] >= 20) & (hosts['CenterOffset'] >= 0.1)]
+    ids = hosts['HaloId']
 
-	# # filter orphan hosts - redundant
-	# ids = list(filter(lambda id: len(reader.GetSubsOfHost(id,snap)) > 0,\
-	# 	hosts['HaloId']))
+    # # filter orphan hosts - redundant
+    # ids = list(filter(lambda id: len(reader.GetSubsOfHost(id,snap)) > 0,\
+    # 	hosts['HaloId']))
 
-	log.info("Found %d haloes"%(len(ids)))
+    logging.info("Found %d haloes" % (len(ids)))
 
-	with open("./output/ids-%03d.txt"%snap, 'w') as f:
-		for id in ids:
-			f.write("%d\n"%id)
+    with open("./output/ids-%03d.txt" % snap, 'w') as f:
+        for id in ids:
+            f.write("%d\n" % id)
