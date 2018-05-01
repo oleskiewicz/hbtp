@@ -3,14 +3,15 @@ import sys
 import logging
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
-from src.hbtp.HBTReader import HBTReader
-from src.hbtp import plot
+from HBTReader import HBTReader
 from src import read
 from src import cosmology
 from src import einasto
 from src import nfw
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 def mf(reader, snap, nbins, bin=0, ax=None):
@@ -84,12 +85,14 @@ def prof(haloes):
      np.log10(nfw.m(np.power(10, x), c)), np.log10(ps)
 
 
-def cmh(snap, haloes, F=0.1):
+def cmh(grav, snap, haloes, F=0.1):
     """Reads, calculates formation time of & plots CMHs of FoF haloes
     """
-    ms = np.array(read.cmh(snap).loc[haloes['HaloId']], dtype=np.float)
+    ms = np.array(read.cmh(grav, snap).loc[haloes['HaloId']], dtype=np.float)
     ms = np.divide(ms.T, ms[:, -1]).T
     m = np.median(ms, axis=0)
+
+    logging.info(m)
 
     zs = read.snaps()
     z0 = zs[zs['Snapshot'] == snap][0]['Redshift']
@@ -101,13 +104,13 @@ def cmh(snap, haloes, F=0.1):
     m_f = F * m[-1]
     y1, y2 = m[m > m_f][0], m[m < m_f][-1]
     x1, x2 = rho[m > m_f][0], rho[m < m_f][-1]
-    rho_f = (np.log10(x1 / x2) / np.log10(y1 / y2)) * (
-        np.log10(m_f / y1)) + np.log10(x1)
+    rho_f = (np.log10(x1 / x2) / np.log10(y1 / y2)) * \
+     (np.log10(m_f / y1)) + np.log10(x1)
 
     return np.log10(rho), np.log10(m), rho_f, np.log10(m_f), np.log10(ms)
 
 
-def process(snap, hs, bin):
+def process(grav, snap, hs, bin):
     zs = read.snaps()
     z0 = zs[zs['Snapshot'] == snap][0]['Redshift']
 
@@ -115,27 +118,27 @@ def process(snap, hs, bin):
 
     logging.info('Snapshot %d, bin %d, %d haloes' % (snap, bin, len(hs)))
 
-    # rho_f = -1.0
-    # rho_s = -1.0
-    try:
-        c, _, _, _, _, _ = prof(hs)
-        # rho_s = np.log10(nfw.rho_enc(1.0/c, c))
-        # F = nfw.m_enc(1.0/c, c)
-        # try:
-        #   _, _, rho_f, _, _ = cmh(snap, hs, F)
-        # except:
-        #   logging.error('Unable to calculate formation time')
-    except:
-        logging.error('Unable to fit density profile')
+    rho_f = -1.0
+    rho_s = -1.0
+    # try:
+    c, _, _, _, _, _ = prof(hs)
+    rho_s = np.log10(nfw.rho_enc(1.0 / c, c))
+    F = nfw.m_enc(1.0 / c, c)
+    # try:
+    _, _, rho_f, _, _ = cmh(grav, snap, hs, F)
+    # except:
+    #     logging.error('Unable to calculate formation time')
+    # except:
+    #     logging.error('Unable to fit density profile')
 
-    return c
+    return rho_s, rho_f
 
 
-def concentration_mass(reader, snap, nbins):
+def concentration_mass(reader, grav, snap, nbins):
     """Plots concentration mass relation at a given snapshot
     """
     hs, _, m = mf(reader, snap, nbins)
-    c = np.log10([process(snap, hs, bin) for bin in range(1, nbins + 1)])
+    c = np.log10([process(grav, snap, hs, bin) for bin in range(1, nbins + 1)])
     m = m[c != -1.0]
     c = c[c != -1.0]
 
@@ -143,16 +146,17 @@ def concentration_mass(reader, snap, nbins):
 
 
 if __name__ == '__main__':
-    snap = int(sys.argv[1])
-    r = HBTReader('./data')
+    # snap = int(sys.argv[1])
+    grav = sys.argv[1]
+    r = HBTReader('./data/%s/subcat' % grav)
     nbins = 20
     bin = 8
 
-    fig, ax = plt.subplots(1)
-    fig.suptitle('snapshot = %d' % snap)
+    # fig, ax = plt.subplots(1)
+    # fig.suptitle('snapshot = %d' % snap)
 
-    m, c = concentration_mass(r, snap, nbins)
-    plot.concentration_mass(ax, m, c)
+    # m, c = concentration_mass(r, snap, nbins)
+    # plot.concentration_mass(ax, m, c)
 
     # hs, _, m = mf(r, snap, nbins)
 
@@ -172,18 +176,18 @@ if __name__ == '__main__':
     #   y_fit,\
     #   ys)
 
-    plt.show()
+    # plt.show()
 
-    # with open('./output/einasto.csv', 'w') as f:
-    #   f.write('snap,bin,rho_f,rho_s\n')
-    #   for snap in [51,61,78,93,122]:
-    #       hs, _, bins = mf(r, snap, nbins)
-    #       for bin in range(1, nbins+1):
-    #           try:
-    #               rho_f, rho_s = process(r, snap, hs, bin)
-    #               f.write('%d,%d,%f,%f\n'%(snap, bin, rho_f, rho_s))
-    #           except:
-    #               logging.info('Failed snapshot %d, bin %d'%(snap, bin))
+    with open('./output/result.csv', 'w') as f:
+        f.write('snap,bin,rho_f,rho_s\n')
+        for snap in [61, 78, 93, 122]:
+            hs, _, bins = mf(r, snap, nbins)
+            for bin in range(1, nbins + 1):
+                # try:
+                rho_f, rho_s = process(grav, snap, hs, bin)
+                f.write('%d,%d,%f,%f\n' % (snap, bin, rho_f, rho_s))
+                # except:
+                #     logging.error('Failed snapshot %d, bin %d'%(snap, bin))
 
     # ds = np.genfromtxt('./output/einasto.csv',\
     #       delimiter=',', skip_header=1,\
