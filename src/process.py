@@ -3,53 +3,51 @@ import sys
 import logging
 import numpy as np
 import pandas as pd
+from scipy.optimize import curve_fit
 # import matplotlib.pyplot as plt
 
-from HBTReader import HBTReader
+from src.HBTReader import HBTReader
 from src import read
 from src import cosmology
-from src import einasto
 from src import nfw
+# from src import einasto
 
 logging.basicConfig(level=logging.DEBUG)
 
 
-def mf(reader, snap, nbins, bin=0, ax=None):
-    """Selects, bins & bins FoF haloes into 10 log-spaced bins
+def mf(reader, snap, nbins):
+    """Selects, bins & bins FoF haloes into log-spaced bins
     """
-    haloes = reader.LoadHostHalos(snap)
-    haloes = haloes[\
-     (haloes['M200Crit'] >= 20) &\
-     (haloes['CenterOffset'] >= 0.1)]
-    haloes['M200Crit'] = 1e10 * haloes['M200Crit']
-
-    counts, bin_edges = np.histogram(np.log10(haloes['M200Crit']), nbins)
-    haloes = np.lib.recfunctions.append_fields(haloes, 'bin',\
-     np.digitize(np.log10(haloes['M200Crit']), bin_edges),\
-     usemask=False)
+    hs = r.LoadHostHalos(snap)[[
+        'HaloId', 'R200CritComoving', 'M200Crit', 'CenterOffset'
+    ]]
+    # hs = hs[(hs['M200Crit'] >= 20) & (hs['CenterOffset'] >= 0.1)]
+    hs = hs[hs['M200Crit'] >= 20]
+    hs['M200Crit'] = 1e10 * hs['M200Crit']
+    counts, bin_edges = np.histogram(np.log10(hs['M200Crit']), nbins)
+    hs = np.lib.recfunctions.append_fields(
+        hs,
+        'bin',
+        np.digitize(np.log10(hs['M200Crit']), bin_edges),
+        usemask=False)
     bins = 0.5 * (bin_edges[1:] + bin_edges[:-1])
-
-    if ax is not None:
-        ax.plot(bins, np.log10(counts), marker='.')
-        if bin != 0:
-            ax.axvspan(bin_edges[bin - 1], bin_edges[bin], alpha=0.5)
-
-    return haloes, counts, bins
+    return hs, counts, bins
 
 
 def smf(reader, snap, ax=None):
     """Selects, bins & bins subhaloes into 20 log-spaced bins
     """
     subhaloes = reader.LoadSubhalos(snap)
-    subhaloes = subhaloes[\
-     (subhaloes['HostHaloId'] != -1) &\
-     (subhaloes['BoundM200Crit'] > 0.0) &\
-     (subhaloes['Nbound'] >= 20)]
+    subhaloes = subhaloes[(subhaloes['HostHaloId'] != -1)
+                          & (subhaloes['BoundM200Crit'] > 0.0) &
+                          (subhaloes['Nbound'] >= 20)]
 
     counts, bin_edges = np.histogram(np.log10(subhaloes['BoundM200Crit']), 20)
-    subhaloes = np.lib.recfunctions.append_fields(subhaloes, 'bin',\
-     np.digitize(np.log10(subhaloes['BoundM200Crit']), bin_edges),\
-     usemask=False)
+    subhaloes = np.lib.recfunctions.append_fields(
+        subhaloes,
+        'bin',
+        np.digitize(np.log10(subhaloes['BoundM200Crit']), bin_edges),
+        usemask=False)
     bins = 0.5 * (bin_edges[1:] + bin_edges[:-1])
 
     if ax is not None:
@@ -70,19 +68,17 @@ def prof(haloes):
     ps = np.divide(ps.T, np.sum(ps, axis=1)).T
     p = np.median(ps, axis=0)
 
-    # c, chi2 = nfw.fit(\
-    #   p,
-    #   lambda c: nfw.m(np.power(10, x), c),\
-    #   np.linspace(1.0, 10.0, 100))
+    def f(x, c):
+        return np.log10(nfw.m(np.power(10.0, x), c))
 
-    c, a, chi2 = einasto.fit(\
-     p,
-     lambda c, a: einasto.m(np.power(10, x), c, a),\
-     np.linspace(1.0, 10.0, 100),
-     np.linspace(0.01, 1.0, 100))
+    c = curve_fit(
+        f,
+        x[idx],
+        np.log10(np.median(np.cumsum(ps, axis=1), axis=0))[idx],
+    )[0][0]
 
-    return c, idx, x, np.log10(p),\
-     np.log10(nfw.m(np.power(10, x), c)), np.log10(ps)
+    return c, idx, x, np.log10(np.median(np.cumsum(ps, axis=1), axis=0)),\
+     np.log10(nfw.m_diff(np.power(10.0, x), c)), np.log10(p)
 
 
 def cmh(grav, snap, haloes, F=0.1):
@@ -123,7 +119,7 @@ def process(grav, snap, hs, bin):
     # try:
     c, _, _, _, _, _ = prof(hs)
     rho_s = np.log10(nfw.rho_enc(1.0 / c, c))
-    F = nfw.m_enc(1.0 / c, c)
+    F = nfw.m(1.0 / c, c)
     # try:
     _, _, rho_f, _, _ = cmh(grav, snap, hs, F)
     # except:
@@ -146,11 +142,13 @@ def concentration_mass(reader, grav, snap, nbins):
 
 
 if __name__ == '__main__':
-    # snap = int(sys.argv[1])
-    grav = sys.argv[1]
-    r = HBTReader('./data/%s/subcat' % grav)
+    snap = 122  #int(sys.argv[1])
+    grav = "GR_b64n512"  #sys.argv[1]
+    r = HBTReader("./data/%s/subcat" % grav)
     nbins = 20
-    bin = 8
+    bin = 10
+
+    print(r.GetFileName(snap))
 
     # fig, ax = plt.subplots(1)
     # fig.suptitle('snapshot = %d' % snap)
@@ -158,9 +156,12 @@ if __name__ == '__main__':
     # m, c = concentration_mass(r, snap, nbins)
     # plot.concentration_mass(ax, m, c)
 
-    # hs, _, m = mf(r, snap, nbins)
+    # hs, counts, m = mf(r, snap, nbins)
+    # print(counts)
 
-    # c, idx, x, y_med, y_fit, ys = prof(hs[hs['bin'] == bin])
+    # c, _, _, _, _, _ = prof(hs[hs['bin'] == bin])
+    # print(c)
+
     # plot.prof(ax,\
     #   idx,\
     #   x,\
@@ -178,16 +179,15 @@ if __name__ == '__main__':
 
     # plt.show()
 
-    with open('./output/result.csv', 'w') as f:
-        f.write('snap,bin,rho_f,rho_s\n')
-        for snap in [61, 78, 93, 122]:
-            hs, _, bins = mf(r, snap, nbins)
-            for bin in range(1, nbins + 1):
-                # try:
-                rho_f, rho_s = process(grav, snap, hs, bin)
-                f.write('%d,%d,%f,%f\n' % (snap, bin, rho_f, rho_s))
-                # except:
-                #     logging.error('Failed snapshot %d, bin %d'%(snap, bin))
+    # print('snap,bin,rho_f,rho_s\n')
+    # for snap in [122,]:
+    #     hs, _, bins = mf(r, snap, nbins)
+    #     for bin in range(1, nbins + 1):
+    #         # try:
+    #         rho_f, rho_s = process(grav, snap, hs, bin)
+    #         print('%d,%d,%f,%f\n' % (snap, bin, rho_f, rho_s))
+    #         # except:
+    #         #     logging.error('Failed snapshot %d, bin %d'%(snap, bin))
 
     # ds = np.genfromtxt('./output/einasto.csv',\
     #       delimiter=',', skip_header=1,\

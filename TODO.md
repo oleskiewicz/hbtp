@@ -1,6 +1,4 @@
-- plot c-m for different bins, use theoretical values of c to plot NFW profiles (compare to fits)
-	- x-y: r-M, values from different mass bins, as well as analytical curve (steeper?)
-	- compare concentrations of profiles of different mass bins on the same plot
-- fit to individual profiles & average later
-
-
+- find out why notebook version of mf gives `[12778, 16757, 14368, 10239, 6547,
+  3833, 2199, 1344, 839, 521, 295, 209, 116, 63, 40, 23, 9, 6, 5, 3]`, but CLI
+  `[913, 668, 505, 350, 242, 215, 131, 97, 77, 47, 38, 19, 20, 13, 8, 7, 0, 4,
+  4, 1]`
