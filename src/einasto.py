@@ -12,15 +12,15 @@ def rho_enc(x, c, a):
     return np.divide(200.0 * Y(c * x, a), np.power(x, 3.0) * Y(c, a))
 
 
-def m_enc(x, c, a):
+def m(x, c, a):
     """M(<x)/M_200"""
     return np.divide(Y(c * x, a), Y(c, a))
 
 
-def m(x, c, a):
+def m_diff(x, c, a):
     """M(x_{i-1} < x < x_{i})/M_200"""
-    y = m_enc(x, c, a)
-    y[1:] = np.diff(m_enc(x, c, a))
+    y = m(x, c, a)
+    y[1:] = np.diff(m(x, c, a))
     return y
 
 
