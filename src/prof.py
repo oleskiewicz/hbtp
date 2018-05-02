@@ -22,9 +22,9 @@ def main(grav, snap, verbose=True):
 
     nbins = 20
     profs = pd.DataFrame(
-     reader.GetHostProfile((ids, ), snap),
-     columns=np.arange(0, nbins),
-     index=ids)
+        reader.GetHostProfile((ids, ), snap),
+        columns=np.arange(0, nbins),
+        index=ids)
 
     if verbose:
         profs.to_csv(sys.stdout, sep=",", index_label="HaloId")

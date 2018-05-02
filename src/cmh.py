@@ -20,7 +20,7 @@ def main(grav, snap, host, f=0.02):
     cmh = reader.GetCollapsedMassHistory(host, snap, f)
     np.savetxt(sys.stdout, cmh, fmt="%d,%d,%f")
     logging.info("Wrote CMH for halo %d at snapshot %d of simulation" %
-     (host, snap, grav))
+                 (host, snap, grav))
 
 
 if __name__ == '__main__':
