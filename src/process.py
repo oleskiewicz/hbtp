@@ -10,20 +10,18 @@ from src.HBTReader import HBTReader
 from src import read
 from src import cosmology
 from src import nfw
-# from src import einasto
 
-logging.basicConfig(level=logging.DEBUG)
+# from src import einasto
 
 
 def mf(reader, snap, nbins):
     """Selects, bins & bins FoF haloes into log-spaced bins
     """
-    hs = r.LoadHostHalos(snap)[[
-        'HaloId', 'R200CritComoving', 'M200Crit', 'CenterOffset'
-    ]]
+    hs = reader.LoadHostHalos(snap)
     # hs = hs[(hs['M200Crit'] >= 20) & (hs['CenterOffset'] >= 0.1)]
     hs = hs[hs['M200Crit'] >= 20]
     hs['M200Crit'] = 1e10 * hs['M200Crit']
+
     counts, bin_edges = np.histogram(np.log10(hs['M200Crit']), nbins)
     hs = np.lib.recfunctions.append_fields(
         hs,
@@ -31,7 +29,8 @@ def mf(reader, snap, nbins):
         np.digitize(np.log10(hs['M200Crit']), bin_edges),
         usemask=False)
     bins = 0.5 * (bin_edges[1:] + bin_edges[:-1])
-    return hs, counts, bins
+
+    return hs, bins, counts
 
 
 def smf(reader, snap, ax=None):
@@ -84,11 +83,10 @@ def prof(haloes):
 def cmh(grav, snap, haloes, F=0.1):
     """Reads, calculates formation time of & plots CMHs of FoF haloes
     """
-    ms = np.array(read.cmh(grav, snap).loc[haloes['HaloId']], dtype=np.float)
+    ms = np.array(
+        read.cmh(grav, snap).loc[haloes['HaloId']].dropna(), dtype=np.float)
     ms = np.divide(ms.T, ms[:, -1]).T
     m = np.median(ms, axis=0)
-
-    logging.info(m)
 
     zs = read.snaps()
     z0 = zs[zs['Snapshot'] == snap][0]['Redshift']
@@ -114,18 +112,22 @@ def process(grav, snap, hs, bin):
 
     logging.info('Snapshot %d, bin %d, %d haloes' % (snap, bin, len(hs)))
 
-    rho_f = -1.0
-    rho_s = -1.0
-    # try:
-    c, _, _, _, _, _ = prof(hs)
-    rho_s = np.log10(nfw.rho_enc(1.0 / c, c))
-    F = nfw.m(1.0 / c, c)
-    # try:
-    _, _, rho_f, _, _ = cmh(grav, snap, hs, F)
-    # except:
-    #     logging.error('Unable to calculate formation time')
-    # except:
-    #     logging.error('Unable to fit density profile')
+    rho_f = np.nan
+    rho_s = np.nan
+
+    try:
+        c, _, _, _, _, _ = prof(hs)
+        rho_s = np.log10(nfw.rho_enc(1.0 / c, c))
+        F = nfw.m(1.0 / c, c)
+        try:
+            _, _, rho_f, _, _ = cmh(grav, snap, hs, F)
+        except:
+            logging.error(
+                'Formation time (snapshot: %d, bin: %d, haloes: %d)' %
+                (snap, bin, len(hs)))
+    except:
+        logging.error('Density profile (snapshot: %d, bin: %d, haloes: %d)' %
+                      (snap, bin, len(hs)))
 
     return rho_s, rho_f
 
@@ -142,74 +144,30 @@ def concentration_mass(reader, grav, snap, nbins):
 
 
 if __name__ == '__main__':
-    snap = 122  #int(sys.argv[1])
-    grav = "GR_b64n512"  #sys.argv[1]
-    r = HBTReader("./data/%s/subcat" % grav)
-    nbins = 20
-    bin = 10
+    nbins = 10
 
-    print(r.GetFileName(snap))
-
-    # fig, ax = plt.subplots(1)
-    # fig.suptitle('snapshot = %d' % snap)
+    # snap = 122  #int(sys.argv[1])
+    # grav = "GR_b64n512"  #sys.argv[1]
+    # r = HBTReader("./data/%s/subcat" % grav)
+    # bin = 10
 
     # m, c = concentration_mass(r, snap, nbins)
-    # plot.concentration_mass(ax, m, c)
 
-    # hs, counts, m = mf(r, snap, nbins)
-    # print(counts)
+    # hs, bins, counts = mf(r, snap, nbins)
 
     # c, _, _, _, _, _ = prof(hs[hs['bin'] == bin])
-    # print(c)
-
-    # plot.prof(ax,\
-    #   idx,\
-    #   x,\
-    #   y_med,\
-    #   y_fit,\
-    #   ys)
 
     # x, y_med, x_fit, y_fit, ys = cmh(snap, hs[hs['bin'] == bin], 0.1)
-    # plot.cmh(ax,\
-    #   x,\
-    #   y_med,\
-    #   x_fit,\
-    #   y_fit,\
-    #   ys)
 
-    # plt.show()
-
-    # print('snap,bin,rho_f,rho_s\n')
-    # for snap in [122,]:
-    #     hs, _, bins = mf(r, snap, nbins)
-    #     for bin in range(1, nbins + 1):
-    #         # try:
-    #         rho_f, rho_s = process(grav, snap, hs, bin)
-    #         print('%d,%d,%f,%f\n' % (snap, bin, rho_f, rho_s))
-    #         # except:
-    #         #     logging.error('Failed snapshot %d, bin %d'%(snap, bin))
-
-    # ds = np.genfromtxt('./output/einasto.csv',\
-    #       delimiter=',', skip_header=1,\
-    #       dtype=np.dtype([\
-    #           ('snap',int),\
-    #           ('bin',int),\
-    #           ('rho_f',float),\
-    #           ('rho_s',float)\
-    # ]))
-
-    # markers = [['o', None], ['.', None], ['^', None], ['x', None], ['*', None]]
-    # for i,snap in enumerate(snaps):
-    #       for d in ds[ds['snap'] == snap]:
-    #           plt.scatter(d['rho_f'], d['rho_s'],\
-    #               color='C%d'%d['bin'], marker=markers[i][0])
-    #           markers[i][1] = plt.Line2D([], [], label='snap %d'%snap,\
-    #               color='k', marker=markers[i][0], linestyle='')
-
-    # plt.xlabel(r'$\log_{10}(\rho_{crit}(z_{form})/\rho_{crit}(z_0))$')
-    # plt.ylabel(r'$\log_{10}(\langle\rho_{s}\rangle/\rho_{crit}(z_0))$')
-    # plt.xlim((0.2, 1.6))
-    # plt.ylim((2.8,4.2))
-
-    # plt.legend(handles=[markers[i][1] for i in range(len(snaps))], loc='lower right')
-    # plt.savefig('./einasto.pdf')
+    print('grav,snap,bin,counts,rho_f,rho_s')
+    for grav in ["GR_b64n512", "fr6_b64n512"]:
+        r = HBTReader("./data/%s/subcat" % grav)
+        for snap in [122, 93, 78, 61]:
+            hs, _, counts = mf(r, snap, nbins)
+            for bin in range(1, nbins + 1):
+                # try:
+                rho_f, rho_s = process(grav, snap, hs, bin)
+                print('%s,%d,%d,%d,%f,%f' % (grav, snap, bin, counts[bin - 1],
+                                             rho_f, rho_s))
+                # except:
+                #     logging.error('Failed snapshot %d, bin %d'%(snap, bin))
