@@ -1,4 +1,11 @@
-- find out why notebook version of mf gives `[12778, 16757, 14368, 10239, 6547,
-  3833, 2199, 1344, 839, 521, 295, 209, 116, 63, 40, 23, 9, 6, 5, 3]`, but CLI
-  `[913, 668, 505, 350, 242, 215, 131, 97, 77, 47, 38, 19, 20, 13, 8, 7, 0, 4,
-  4, 1]`
+- offset in GR model
+- f(R) model
+- no redshift clusters
+- why is GR & f(R) different in high redshifts?
+- test different $f$ values (i.e. $50\%$)
+- get hold of Aaron
+- 1 sim with 1 tree finder (taking bugs away moves us further from Aaron's result)
+- John & Jonathan has different trees & group finders
+- Christian GR & f(R) box (with SUBFIND on it already)
+- how c-m differs pre- and post- stacking 
+- fit pre-stacking (Ludlow+2013)
