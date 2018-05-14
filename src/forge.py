@@ -58,16 +58,14 @@ def forge(data):
      index='HaloId')
 
 
-def main(grav, snap):
+def main(file):
     """Query & filter halo IDs.
 
-    :param str grav: Gravity (GR_b64n512 or fr6_b64n512)
-    :param int snap: Snapshot number (between 122 and 10)
+    :param str file: file withg CMH data
     """
-    f = "./output/cmh.%s.%03d.csv" % (grav, snap)
-    long = pd.read_csv(f, sep=",")
+    long = pd.read_csv(file, sep=",")
     wide = forge(long)
-    wide.to_csv(f, sep=",")
+    wide.to_csv(file, sep=",")
 
 
 if __name__ == '__main__':

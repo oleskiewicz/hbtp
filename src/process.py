@@ -129,7 +129,7 @@ def process(grav, snap, hs, bin):
         logging.error('Density profile (snapshot: %d, bin: %d, haloes: %d)' %
                       (snap, bin, len(hs)))
 
-    return rho_s, rho_f
+    return rho_f, rho_s
 
 
 def concentration_mass(reader, grav, snap, nbins):

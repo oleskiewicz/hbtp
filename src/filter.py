@@ -6,20 +6,20 @@ import numpy as np
 from HBTReader import HBTReader
 
 
-def main(grav, snap, verbose=True):
+def main(grav, snap, save=True):
     """Query & filter halo IDs.
 
     :param str grav: Gravity (GR_b64n512 or fr6_b64n512)
     :param int snap: Snapshot number (between 122 and 10)
-    :param bool verbose: print IDs to stdout?
+    :param bool save: save IDs to file?
     """
     logging.info("Loading snapshot %d of run %s" % (snap, grav))
 
     reader = HBTReader("./data/%s/subcat" % grav)
     hosts = reader.LoadHostHalos(snap)
 
-    # FILTER 1: small mass haloes & relaxed
-    hosts = hosts[(hosts['M200Crit'] >= 20) & (hosts['CenterOffset'] >= 0.1)]
+    # FILTER 1: small mass haloes
+    hosts = hosts[hosts['M200Crit'] >= 20]
     ids = hosts['HaloId']
 
     # # FILTER 2: orphan hosts - redundant
@@ -28,9 +28,10 @@ def main(grav, snap, verbose=True):
 
     logging.info("Found %d haloes" % (len(ids)))
 
-    if verbose:
-        for i in ids:
-            print("%d" % i)
+    if save:
+        with open("./output/ids.%s.%03d.csv" % (grav, snap), 'w') as f:
+            for i in ids:
+                f.write("%d\n" % i)
 
     return ids
 

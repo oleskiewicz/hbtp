@@ -16,10 +16,12 @@ def main(grav, snap, host, f=0.02):
     :param float f: NFW f parameter
     """
     reader = HBTReader("./data/%s/subcat" % grav)
-
     cmh = reader.GetCollapsedMassHistory(host, snap, f)
-    np.savetxt(sys.stdout, cmh, fmt="%d,%d,%f")
-    logging.info("Wrote CMH for halo %d at snapshot %d of simulation" %
+    np.savetxt(
+        "./output/cmh.f%03d.%s.%03d.%d.txt" % (f * 100, grav, snap, host),
+        cmh,
+        fmt="%d,%d,%f")
+    logging.info("Wrote CMH for halo %d at snapshot %d of %s simulation" %
                  (host, snap, grav))
 
 
