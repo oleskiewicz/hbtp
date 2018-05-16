@@ -55,11 +55,11 @@ def forge(data):
     return data.pivot_table(\
      values='M200Crit',\
      columns='Snapshot',
-     index='HaloId')
+     index='HostHaloId')
 
 
 def main(file):
-    """Query & filter halo IDs.
+    """Un-melt (forge) CSV file, from long to wide form.
 
     :param str file: file withg CMH data
     """
