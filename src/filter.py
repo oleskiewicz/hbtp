@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import sys
 import logging
 import defopt
 import numpy as np
@@ -6,12 +7,12 @@ import numpy as np
 from HBTReader import HBTReader
 
 
-def main(grav, snap, save=True):
+def main(grav, snap, verbose=True):
     """Query & filter halo IDs.
 
     :param str grav: Gravity (GR_b64n512 or fr6_b64n512)
-    :param int snap: Snapshot number (between 122 and 10)
-    :param bool save: save IDs to file?
+    :param int snap: Snapshot number (between 122 and 9)
+    :param bool verbose: print to stdout?
     """
     logging.info("Loading snapshot %d of run %s" % (snap, grav))
 
@@ -28,10 +29,9 @@ def main(grav, snap, save=True):
 
     logging.info("Found %d haloes" % (len(ids)))
 
-    if save:
-        with open("./output/ids.%s.%03d.csv" % (grav, snap), 'w') as f:
-            for i in ids:
-                f.write("%d\n" % i)
+    if verbose:
+        for i in ids:
+            sys.stdout.write("%d\n" % i)
 
     return ids
 

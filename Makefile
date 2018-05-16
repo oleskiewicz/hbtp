@@ -1,7 +1,3 @@
-GRAVS:=GR_b64n512 fr6_b64n512
-SNAPS:=122 093 078 061 051
-PROFS:=nfw einasto
-
 SRC:=./src
 OUT:=./output
 
@@ -9,7 +5,7 @@ ids: $(OUT)/ids.$(GRAV).$(SNAP).csv
 cmh: ids $(OUT)/cmh.f$(NFW_f).$(GRAV).$(SNAP).csv
 
 $(OUT)/ids.$(GRAV).$(SNAP).csv: $(SRC)/filter.py
-	$< $(GRAV) $(SNAP)
+	$< $(GRAV) $(SNAP) > $@
 
 $(OUT)/result.$(PROF).csv: $(SRC)/process.py
 	$< $(PROF)
