@@ -16,7 +16,7 @@ $(OUT)/result.$(PROF).csv: $(SRC)/process.py
 	$< $(PROF)
 
 $(OUT)/cmh.f$(NFW_f).$(GRAV).$(SNAP).csv: $(SRC)/forge.py $(foreach ID,$(IDS),$(OUT)/cmh.f$(NFW_f).$(GRAV).$(SNAP).$(ID).txt)
-	echo "HaloId,Snapshot,M200Crit" > $@
+	echo "HostHaloId,Snapshot,M200Crit" > $@
 	cat $(OUT)/cmh.f$(NFW_f).$(GRAV).$(SNAP).*.txt >> $@
 	$< $@
 
@@ -34,6 +34,6 @@ docs:
 
 clean:
 	cd docs; make clean
-	rm -i $(OUT)/.*.csv
+	rm -i $(OUT)/*.txt
 
 .PHONY: purge clean docs plots cmhs ids
