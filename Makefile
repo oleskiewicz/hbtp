@@ -1,14 +1,19 @@
 SRC:=./src
 OUT:=./output
 
+GRAV?=GR_b64n512
+SNAP?=051
+NFW_f?=002
+
 ids: $(OUT)/ids.$(GRAV).$(SNAP).csv
+prof: $(OUT)/prof.$(GRAV).$(SNAP).csv
 cmh: ids $(OUT)/cmh.f$(NFW_f).$(GRAV).$(SNAP).csv
 
 $(OUT)/ids.$(GRAV).$(SNAP).csv: $(SRC)/filter.py
 	$< $(GRAV) $(SNAP) > $@
 
-$(OUT)/result.$(PROF).csv: $(SRC)/process.py
-	$< $(PROF)
+$(OUT)/prof.$(GRAV).$(SNAP).csv: $(SRC)/prof.py
+	$< $(GRAV) $(SNAP) > $@
 
 $(OUT)/cmh.f$(NFW_f).$(GRAV).$(SNAP).csv: $(SRC)/cmh.py $(OUT)/ids.$(GRAV).$(SNAP).csv
 	$(SRC)/cmh.py \
@@ -16,6 +21,9 @@ $(OUT)/cmh.f$(NFW_f).$(GRAV).$(SNAP).csv: $(SRC)/cmh.py $(OUT)/ids.$(GRAV).$(SNA
 		-H $(shell cat $(OUT)/ids.$(GRAV).$(SNAP).csv | paste -s -d' ') \
 		-f $(shell echo "$(NFW_f) / 100" | bc -l) \
 		> $@
+
+$(OUT)/result.$(PROF).csv: $(SRC)/process.py
+	$< $(PROF)
 
 $(OUT)/mt.%.dot: $(SRC)/mt.py
 	$< $(shell echo $* | tr '.' ' ') > $@
