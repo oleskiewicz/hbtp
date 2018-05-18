@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 import sys
 import logging
-import multiprocessing as mp
 import numpy as np
 import pandas as pd
 from numpy.lib.recfunctions import append_fields
 import defopt
 from HBTReader import HBTReader
+from util import pmap
 
 logging.getLogger().setLevel(logging.INFO)
 
@@ -74,76 +74,6 @@ class HBTHistoryReader(HBTReader):
                                                                    isnap))
 
         return cmh
-
-
-def pad(ls, value=0.0, on_left=True):
-    """Pad a 2D list with values.
-
-    Converts this::
-
-        [[1, 2, 3],
-         [2, 3]]
-
-    Into this::
-
-        [[1, 2, 3],
-         [0, 2, 3]]
-
-    Note:
-
-        This is serving as a poor replacement for ``pivot`` in ``pandas``, only
-        for prototyping.
-
-    :param list ls: list of lists
-    :param float value: what to pad with
-    :param bool on_left: pad on the left if True, on the Right if False
-    """
-
-    maxlen = max([len(l) for l in ls])
-    for i, l in enumerate(ls):
-        if len(ls[i]) < maxlen:
-            if on_left:
-                ls[i] = ([
-                    value,
-                ] * (maxlen - len(l))) + l
-            else:
-                ls[i] = l + ([
-                    value,
-                ] * (maxlen - len(l)))
-    return maxlen, ls
-
-
-def pmap(f, xs, nprocs=mp.cpu_count()):
-    """Parallel map.
-
-    As seen in: <https://stackoverflow.com/a/16071616>.
-    """
-
-    def fun(f, q_in, q_out):
-        while True:
-            i, x = q_in.get()
-            if i is None:
-                break
-            q_out.put((i, f(x)))
-
-    q_in = mp.Queue(1)
-    q_out = mp.Queue()
-
-    proc = [
-        mp.Process(target=fun, args=(f, q_in, q_out)) for _ in xrange(nprocs)
-    ]
-
-    for p in proc:
-        p.daemon = True
-        p.start()
-
-    sent = [q_in.put((i, x)) for i, x in enumerate(xs)]
-    [q_in.put((None, None)) for _ in xrange(nprocs)]
-    res = [q_out.get() for _ in xrange(len(sent))]
-
-    [p.join() for p in proc]
-
-    return [x for i, x in res]
 
 
 def main(grav, snap, hosts, f=0.02):

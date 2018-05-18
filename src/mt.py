@@ -19,7 +19,7 @@ def main(grav, snap, host):
     logging.info("Halo %d at snapshot %d of %s" % (host, snap, grav))
 
     print("graph {")
-    _ = reader.GetMergerTree(host, snap, sys.stdout)
+    _ = reader.GetHostMergerTree(host, snap, sys.stdout)
     print("}")
 
 

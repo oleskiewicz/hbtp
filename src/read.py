@@ -5,14 +5,14 @@ import pandas as pd
 
 
 def snaps():
-    d = np.genfromtxt("./output/redshift_list.txt", delimiter=" ",\
+    d = np.genfromtxt("./data/redshift_list.txt", delimiter=" ",\
      dtype=np.dtype([('Snapshot', np.int32), ('Redshift', np.float32)]))
     return d
 
 
 def cmh(grav, snap, f=0.02):
     d = pd.read_csv("./output/cmh.f%03d.%s.%03d.csv" % (100 * f, grav, snap))
-    d.set_index('HaloId', inplace=True)
+    d.set_index('HostHaloId', inplace=True)
     d.fillna(0.0, inplace=True)
     return d
 

@@ -7,4 +7,3 @@ for G in GR_b64n512 fr6_b64n512; do
 		done;
 	done;
 done;
-

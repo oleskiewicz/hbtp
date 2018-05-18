@@ -35,7 +35,6 @@ docs:
 	cd docs; make
 
 clean:
-	cd docs; make clean
-	rm -i $(OUT)/*.txt
+	cd $(OUT); find -maxdepth 1 -size 0 -print | xargs wc -l
 
-.PHONY: purge clean docs plots cmhs ids
+.PHONY: clean docs cmh prof ids

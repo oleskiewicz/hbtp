@@ -80,11 +80,11 @@ def prof(haloes):
      np.log10(nfw.m_diff(np.power(10.0, x), c)), np.log10(p)
 
 
-def cmh(grav, snap, haloes, F=0.1):
+def cmh(haloes, grav, snap, f=0.02, F=0.1):
     """Reads, calculates formation time of & plots CMHs of FoF haloes
     """
     ms = np.array(
-        read.cmh(grav, snap).loc[haloes['HaloId']].dropna(), dtype=np.float)
+        read.cmh(grav, snap, f).loc[haloes['HaloId']].dropna(), dtype=np.float)
     ms = np.divide(ms.T, ms[:, -1]).T
     m = np.median(ms, axis=0)
 
@@ -104,7 +104,7 @@ def cmh(grav, snap, haloes, F=0.1):
     return np.log10(rho), np.log10(m), rho_f, np.log10(m_f), np.log10(ms)
 
 
-def process(grav, snap, hs, bin):
+def process(hs, grav, snap, f, bin):
     zs = read.snaps()
     z0 = zs[zs['Snapshot'] == snap][0]['Redshift']
 
@@ -120,14 +120,15 @@ def process(grav, snap, hs, bin):
         rho_s = np.log10(nfw.rho_enc(1.0 / c, c))
         F = nfw.m(1.0 / c, c)
         try:
-            _, _, rho_f, _, _ = cmh(grav, snap, hs, F)
+            _, _, rho_f, _, _ = cmh(hs, grav, snap, f, F)
         except:
             logging.error(
-                'Formation time (snapshot: %d, bin: %d, haloes: %d)' %
-                (snap, bin, len(hs)))
+                'Formation time (run: %s, snapshot: %d, f: %.2f, bin: %d, haloes: %d)'
+                % (grav, snap, f, bin, len(hs)))
     except:
-        logging.error('Density profile (snapshot: %d, bin: %d, haloes: %d)' %
-                      (snap, bin, len(hs)))
+        logging.error(
+            'Density profile (run: %s, snapshot: %d, f: %.2f, bin: %d, haloes: %d)'
+            % (grav, snap, f, bin, len(hs)))
 
     return rho_f, rho_s
 
@@ -144,30 +145,20 @@ def concentration_mass(reader, grav, snap, nbins):
 
 
 if __name__ == '__main__':
-    nbins = 10
+    nbins = 20
 
-    # snap = 122  #int(sys.argv[1])
-    # grav = "GR_b64n512"  #sys.argv[1]
-    # r = HBTReader("./data/%s/subcat" % grav)
-    # bin = 10
+    # bin = 20
+    # snap = 61
+    # grav = "GR_b64n512"
+    # f = 0.10
 
-    # m, c = concentration_mass(r, snap, nbins)
-
-    # hs, bins, counts = mf(r, snap, nbins)
-
-    # c, _, _, _, _, _ = prof(hs[hs['bin'] == bin])
-
-    # x, y_med, x_fit, y_fit, ys = cmh(snap, hs[hs['bin'] == bin], 0.1)
-
-    print('grav,snap,bin,counts,rho_f,rho_s')
+    sys.stdout.write('prof,grav,snap,f,bin,counts,rho_f,rho_s\n')
     for grav in ["GR_b64n512", "fr6_b64n512"]:
-        r = HBTReader("./data/%s/subcat" % grav)
-        for snap in [122, 93, 78, 61]:
-            hs, _, counts = mf(r, snap, nbins)
-            for bin in range(1, nbins + 1):
-                # try:
-                rho_f, rho_s = process(grav, snap, hs, bin)
-                print('%s,%d,%d,%d,%f,%f' % (grav, snap, bin, counts[bin - 1],
-                                             rho_f, rho_s))
-                # except:
-                #     logging.error('Failed snapshot %d, bin %d'%(snap, bin))
+        reader = HBTReader("./data/%s/subcat" % grav)
+        for snap in [122, 93, 78, 61, 51]:
+            for f in [0.01, 0.02, 0.1, 0.5]:
+                hs, _, counts = mf(reader, snap, nbins)
+                for i, count in enumerate(counts):
+                    rho_f, rho_s = process(hs, grav, snap, f, i + 1)
+                    print('%s,%s,%d,%.2f,%d,%d,%f,%f' %
+                          ("nfw", grav, snap, f, i + 1, count, rho_f, rho_s))
