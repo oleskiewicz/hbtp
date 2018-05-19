@@ -4,6 +4,7 @@ OUT:=./output
 GRAV?=GR_b64n512
 SNAP?=051
 NFW_f?=002
+PROF?=nfw
 
 ids: $(OUT)/ids.$(GRAV).$(SNAP).csv
 prof: $(OUT)/prof.$(GRAV).$(SNAP).csv
@@ -23,7 +24,7 @@ $(OUT)/cmh.f$(NFW_f).$(GRAV).$(SNAP).csv: $(SRC)/cmh.py $(OUT)/ids.$(GRAV).$(SNA
 		> $@
 
 $(OUT)/result.$(PROF).csv: $(SRC)/process.py
-	$< $(PROF)
+	$< > $@
 
 $(OUT)/mt.%.dot: $(SRC)/mt.py
 	$< $(shell echo $* | tr '.' ' ') > $@

@@ -6,10 +6,10 @@ import pandas as pd
 from scipy.optimize import curve_fit
 # import matplotlib.pyplot as plt
 
-from src.HBTReader import HBTReader
-from src import read
-from src import cosmology
-from src import nfw
+from HBTReader import HBTReader
+import read
+import cosmology
+import nfw
 
 # from src import einasto
 
