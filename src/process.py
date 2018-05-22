@@ -4,7 +4,7 @@ import logging
 import numpy as np
 import pandas as pd
 from scipy.optimize import curve_fit
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
 from HBTReader import HBTReader
 import read
@@ -133,24 +133,37 @@ def process(hs, grav, snap, f, bin):
     return rho_f, rho_s
 
 
-def concentration_mass(reader, grav, snap, nbins):
+def concentration_mass(reader, grav, snap, f, nbins):
     """Plots concentration mass relation at a given snapshot
     """
-    hs, _, m = mf(reader, snap, nbins)
-    c = np.log10([process(grav, snap, hs, bin) for bin in range(1, nbins + 1)])
-    m = m[c != -1.0]
-    c = c[c != -1.0]
-
-    return m, c
+    hs, ms, _ = mf(reader, snap, nbins)
+    cs = np.log10([
+        prof(hs[hs['bin'] == i + 1])[0]
+        if len(hs[hs['bin'] == i + 1]) > 0 else np.nan
+        for i, m in enumerate(ms)
+    ])
+    return ms, cs
 
 
 if __name__ == '__main__':
     nbins = 20
 
-    # bin = 20
-    # snap = 61
+    # bin = 10
+    # snap = 122
     # grav = "GR_b64n512"
-    # f = 0.10
+    # f = 0.02
+
+    # plt.plot(
+    #     *concentration_mass(
+    #         HBTReader("./data/%s/subcat" % "GR_b64n512"),
+    #         "GR_b64n512", snap, f, nbins),
+    #     c='C0')
+    # plt.plot(
+    #     *concentration_mass(
+    #         HBTReader("./data/%s/subcat" % "fr6_b64n512"),
+    #          "fr6_b64n512", snap, f, nbins),
+    #     c='C1')
+    # plt.show()
 
     sys.stdout.write('prof,grav,snap,f,bin,counts,rho_f,rho_s\n')
     for grav in ["GR_b64n512", "fr6_b64n512"]:
