@@ -52,10 +52,9 @@ def forge(data):
     Returns:
         pandas.DataFrame: output CMH DataFrame in a wide format
     """
-    return data.pivot_table(\
-     values='M200Crit',\
-     columns='Snapshot',
-     index='HostHaloId')
+    return data.pivot_table(
+        values="M200Crit", columns="Snapshot", index="HostHaloId"
+    )
 
 
 def main(file):
@@ -68,5 +67,5 @@ def main(file):
     wide.to_csv(file, sep=",")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     defopt.run(main, strict_kwonly=False)

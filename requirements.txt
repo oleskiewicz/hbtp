@@ -1,7 +1,7 @@
-h5py
-numpy
-scipy
-pandas
-matplotlib
-Sphinx
 defopt
+h5py
+matplotlib
+numpy
+pandas
+scipy
+Sphinx

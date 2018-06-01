@@ -64,7 +64,7 @@ de-duplicating *nodes*:
 
 de-duplicating *links*:
 	like above, but replace ``element not in visited_halo_ids`` with ``link not in
-	visited_halo_links``, and save the links instead of ids 
+	visited_halo_links``, and save the links instead of ids
 
 only keeping main progenitors:
   function only branches off if the ``prog_host_id`` has ``isMainProgenitor ==

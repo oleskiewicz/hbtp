@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import multiprocessing as mp
+
 import numpy as np
 import pandas as pd
 
@@ -23,9 +24,9 @@ def flatten(tree):
 
 
 def normalise(d, which=-1):
-    if (type(d) == pd.core.frame.DataFrame):
+    if type(d) == pd.core.frame.DataFrame:
         d = d.apply(lambda x: x / x[which], 1)
-    elif (type(d) == np.ndarray):
+    elif type(d) == np.ndarray:
         d = np.divide(d.T, d.T[which, :]).T
     else:
         raise TypeError("Supply DataFrame or NumPy array")
@@ -46,10 +47,10 @@ def count_grouped(d):
     dif = np.concatenate(([1], np.diff(d)))
     idx = np.concatenate((np.where(dif)[0], [d.shape[0]]))
     grouped = np.empty(
-        len(idx) - 1,
-        dtype=np.dtype([('value', np.int32), ('count', np.int32)]))
-    grouped['value'] = d[idx[:-1]]
-    grouped['count'] = np.diff(idx)
+        len(idx) - 1, dtype=np.dtype([("value", np.int32), ("count", np.int32)])
+    )
+    grouped["value"] = d[idx[:-1]]
+    grouped["count"] = np.diff(idx)
     return grouped
 
 
@@ -80,13 +81,9 @@ def pad(ls, value=0.0, on_left=True):
     for i, l in enumerate(ls):
         if len(ls[i]) < maxlen:
             if on_left:
-                ls[i] = ([
-                    value,
-                ] * (maxlen - len(l))) + l
+                ls[i] = ([value] * (maxlen - len(l))) + l
             else:
-                ls[i] = l + ([
-                    value,
-                ] * (maxlen - len(l)))
+                ls[i] = l + ([value] * (maxlen - len(l)))
     return maxlen, ls
 
 

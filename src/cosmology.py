@@ -2,7 +2,7 @@
 import numpy as np
 
 h = 0.697
-Rho0 = 147.7543  #rho_crit(z = 0) in M_solar/kpc^3
+Rho0 = 147.7543  # rho_crit(z = 0) in M_solar/kpc^3
 OmegaM = 0.281
 OmegaL = 1. - OmegaM
 

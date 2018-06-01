@@ -1,15 +1,12 @@
 #!/usr/bin/env python
-import sys
 import logging
+import sys
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-
+from src import cosmology, einasto, nfw, read
 from src.hbtp.HBTReader import HBTReader
-from src import read
-from src import cosmology
-from src import einasto
-from src import nfw
 
 
 def mf(ax, bins, counts, bin=0, **kwargs):
@@ -29,50 +26,54 @@ def smf(ax, bins, counts, **kwargs):
 def prof(ax, idx, x, y_med, y_fit, ys=None):
     """Plots binned particle profiles for FoF haloes
 	"""
-    ax.set_xlabel(r'$\log_{10}(r/r_{200})$')
-    ax.set_ylabel(r'$\log(M(r)/M(r<r_{200}))$')
+    ax.set_xlabel(r"$\log_{10}(r/r_{200})$")
+    ax.set_ylabel(r"$\log(M(r)/M(r<r_{200}))$")
 
-    ax.plot(x[idx], y_fit[idx],\
-     color='C0', linewidth=4, zorder=1)
-    ax.plot(x[idx], y_med[idx],\
-     color='C1', marker='o', zorder=2,\
-     label='median density profile')
+    ax.plot(x[idx], y_fit[idx], color="C0", linewidth=4, zorder=1)
+    ax.plot(
+        x[idx],
+        y_med[idx],
+        color="C1",
+        marker="o",
+        zorder=2,
+        label="median density profile",
+    )
 
     if ys is not None:
-        [ax.plot(x, _, color='grey', zorder=0) for _ in ys]
+        [ax.plot(x, _, color="grey", zorder=0) for _ in ys]
 
-    ax.legend(loc='lower right')
+    ax.legend(loc="lower right")
 
 
 def cmh(ax, x, y_med, x_fit, y_fit, ys=None):
     """Plots CMHs of FoF haloes
 	"""
-    ax.set_xlabel(r'$\log_{10}(\rho_{crit}(z)/\rho_{crit}(z_0))$')
-    ax.set_ylabel(r'$\log_{10}(\Sigma_i(M_{i,200})/M_{200}(z=z_0))$')
+    ax.set_xlabel(r"$\log_{10}(\rho_{crit}(z)/\rho_{crit}(z_0))$")
+    ax.set_ylabel(r"$\log_{10}(\Sigma_i(M_{i,200})/M_{200}(z=z_0))$")
 
-    ax.plot(x, y_med,\
-     color='C1', marker='o',\
-     label='median CMH')
+    ax.plot(x, y_med, color="C1", marker="o", label="median CMH")
 
-    ax.axhline(y_fit,\
-     color='C0', linestyle='-.')
-    ax.axvline(x_fit,\
-     color='C0', linestyle='--',\
-     label=r'formation time $\rho_{crit} = %.2f$'%x_fit)
+    ax.axhline(y_fit, color="C0", linestyle="-.")
+    ax.axvline(
+        x_fit,
+        color="C0",
+        linestyle="--",
+        label=r"formation time $\rho_{crit} = %.2f$" % x_fit,
+    )
 
     if ys is not None:
-        [ax.plot(x, _, color='grey', zorder=0) for _ in ys]
+        [ax.plot(x, _, color="grey", zorder=0) for _ in ys]
 
-    ax.legend(loc='lower left')
+    ax.legend(loc="lower left")
 
 
 def process(snap, hs, bin):
     zs = read.snaps()
-    z0 = zs[zs['Snapshot'] == snap][0]['Redshift']
+    z0 = zs[zs["Snapshot"] == snap][0]["Redshift"]
 
-    hs = hs[hs['bin'] == bin]
+    hs = hs[hs["bin"] == bin]
 
-    logging.info('Snapshot %d, bin %d, %d haloes' % (snap, bin, len(hs)))
+    logging.info("Snapshot %d, bin %d, %d haloes" % (snap, bin, len(hs)))
 
     c = -1.0
     rho_f = -1.0
@@ -83,9 +84,9 @@ def process(snap, hs, bin):
         try:
             rho_f = cmh(hs, snap, F)
         except:
-            logging.error('Unable to calculate formation time')
+            logging.error("Unable to calculate formation time")
     except:
-        logging.error('Unable to fit density profile')
+        logging.error("Unable to fit density profile")
 
     return c
 
@@ -93,22 +94,22 @@ def process(snap, hs, bin):
 def concentration_mass(ax, m, c):
     """Plots concentration mass relation at a given snapshot
 	"""
-    ax.set_xlabel(r'$\log_{10}M_{200}$')
-    ax.set_ylabel(r'$\log_{10}c$')
+    ax.set_xlabel(r"$\log_{10}M_{200}$")
+    ax.set_ylabel(r"$\log_{10}c$")
     ax.set_ylim([0.4, 1.4])
-    ax.plot(m, c, '.')
-    ax.plot(np.array([11.0, 14.0]), np.array([0.93, 0.65]), '-')
+    ax.plot(m, c, ".")
+    ax.plot(np.array([11.0, 14.0]), np.array([0.93, 0.65]), "-")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     snap = int(sys.argv[1])
-    r = HBTReader('./data')
+    r = HBTReader("./data")
     nbins = 100
     bin = 10
 
     fig, ax = plt.subplots(1)
     hs, _, m = mf(ax, snap, nbins)
-    _ = cmh(snap, hs[hs['bin'] == bin], ax=ax)
+    _ = cmh(snap, hs[hs["bin"] == bin], ax=ax)
     # _ = concentration_mass(r, snap, nbins, ax)
     plt.show()
 
@@ -124,21 +125,21 @@ if __name__ == '__main__':
     # 				logging.info('Failed snapshot %d, bin %d'%(snap, bin))
 
     # ds = np.genfromtxt('./output/einasto.csv',\
-    #		delimiter=',', skip_header=1,\
-    #		dtype=np.dtype([\
-    #			('snap',int),\
-    #			('bin',int),\
-    #			('rho_f',float),\
-    #			('rho_s',float)\
+    # 		delimiter=',', skip_header=1,\
+    # 		dtype=np.dtype([\
+    # 			('snap',int),\
+    # 			('bin',int),\
+    # 			('rho_f',float),\
+    # 			('rho_s',float)\
     # ]))
 
     # markers = [['o', None], ['.', None], ['^', None], ['x', None], ['*', None]]
     # for i,snap in enumerate(snaps):
-    #		for d in ds[ds['snap'] == snap]:
-    #			plt.scatter(d['rho_f'], d['rho_s'],\
-    #				color='C%d'%d['bin'], marker=markers[i][0])
-    #			markers[i][1] = plt.Line2D([], [], label='snap %d'%snap,\
-    #				color='k', marker=markers[i][0], linestyle='')
+    # 		for d in ds[ds['snap'] == snap]:
+    # 			plt.scatter(d['rho_f'], d['rho_s'],\
+    # 				color='C%d'%d['bin'], marker=markers[i][0])
+    # 			markers[i][1] = plt.Line2D([], [], label='snap %d'%snap,\
+    # 				color='k', marker=markers[i][0], linestyle='')
 
     # plt.xlabel(r'$\log_{10}(\rho_{crit}(z_{form})/\rho_{crit}(z_0))$')
     # plt.ylabel(r'$\log_{10}(\langle\rho_{s}\rangle/\rho_{crit}(z_0))$')

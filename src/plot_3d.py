@@ -1,11 +1,11 @@
 #!/usr/bin/env python
-import numpy as np
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 import logging
 
+import matplotlib.pyplot as plt
+import numpy as np
 import util
 from HBTReader import HBTReader
+from mpl_toolkits.mplot3d import Axes3D
 
 
 def main(grav, snap, host, save=False):
@@ -49,8 +49,8 @@ def main(grav, snap, host, save=False):
         p = np.divide(p, p[-1])
         x = np.linspace(-2.0, 0.0, 20)
 
-        ax.set_xlabel(r'$\log_{10}(r/r_{200})$')
-        ax.set_ylabel(r'$\log_{10}(M(<r)/M_{200})$')
+        ax.set_xlabel(r"$\log_{10}(r/r_{200})$")
+        ax.set_ylabel(r"$\log_{10}(M(<r)/M_{200})$")
         ax.set_xlim([-2.1, 0.1])
         ax.set_ylim([-2.1, 0.1])
 
@@ -64,10 +64,10 @@ def main(grav, snap, host, save=False):
         # plt.tight_layout()
 
         if save:
-            fig.savefig('./plots/profile.%s.%03d_%d.png' % (grav, snap, host))
+            fig.savefig("./plots/profile.%s.%03d_%d.png" % (grav, snap, host))
         else:
             plt.show()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     defopt.run(main, strict_kwonly=False)

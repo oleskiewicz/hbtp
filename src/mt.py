@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-import sys
 import logging
+import sys
+
 import defopt
 import numpy as np
-
 from HBTReader import HBTReader
 
 
@@ -23,5 +23,5 @@ def main(grav, snap, host):
     print("}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     defopt.run(main, strict_kwonly=False)

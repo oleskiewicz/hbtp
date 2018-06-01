@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-import sys
 import logging
+import sys
+
 import defopt
 import numpy as np
-
 from HBTReader import HBTReader
 
 
@@ -20,8 +20,8 @@ def main(grav, snap, verbose=True):
     hosts = reader.LoadHostHalos(snap)
 
     # FILTER 1: small mass haloes
-    hosts = hosts[hosts['M200Crit'] >= 20]
-    ids = hosts['HaloId']
+    hosts = hosts[hosts["M200Crit"] >= 20]
+    ids = hosts["HaloId"]
 
     # # FILTER 2: orphan hosts - redundant
     # ids = list(filter(lambda id: len(reader.GetSubsOfHost(id,snap)) > 0,
@@ -36,5 +36,5 @@ def main(grav, snap, verbose=True):
     return ids
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     defopt.run(main, strict_kwonly=False)
