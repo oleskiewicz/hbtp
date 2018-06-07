@@ -11,21 +11,21 @@ from src.hbtp.HBTReader import HBTReader
 
 def mf(ax, bins, counts, bin=0, **kwargs):
     """Plots FoF halo mass function
-	"""
+    """
     ax.plot(bins, np.log10(counts), **kwargs)
     # if bin != 0:
-    # 	ax.axvspan(bin_edges[bin-1], bin_edges[bin], alpha=0.5)
+    #     ax.axvspan(bin_edges[bin-1], bin_edges[bin], alpha=0.5)
 
 
 def smf(ax, bins, counts, **kwargs):
     """Plots subhaloes
-	"""
+    """
     ax.plot(bins, np.log10(counts), **kwargs)
 
 
 def prof(ax, idx, x, y_med, y_fit, ys=None):
     """Plots binned particle profiles for FoF haloes
-	"""
+    """
     ax.set_xlabel(r"$\log_{10}(r/r_{200})$")
     ax.set_ylabel(r"$\log(M(r)/M(r<r_{200}))$")
 
@@ -47,7 +47,7 @@ def prof(ax, idx, x, y_med, y_fit, ys=None):
 
 def cmh(ax, x, y_med, x_fit, y_fit, ys=None):
     """Plots CMHs of FoF haloes
-	"""
+    """
     ax.set_xlabel(r"$\log_{10}(\rho_{crit}(z)/\rho_{crit}(z_0))$")
     ax.set_ylabel(r"$\log_{10}(\Sigma_i(M_{i,200})/M_{200}(z=z_0))$")
 
@@ -93,7 +93,7 @@ def process(snap, hs, bin):
 
 def concentration_mass(ax, m, c):
     """Plots concentration mass relation at a given snapshot
-	"""
+    """
     ax.set_xlabel(r"$\log_{10}M_{200}$")
     ax.set_ylabel(r"$\log_{10}c$")
     ax.set_ylim([0.4, 1.4])
@@ -114,32 +114,32 @@ if __name__ == "__main__":
     plt.show()
 
     # with open('./output/einasto.csv', 'w') as f:
-    # 	f.write('snap,bin,rho_f,rho_s\n')
-    # 	for snap in [51,61,78,93,122]:
-    # 		hs, _, bins = mf(r, snap, nbins)
-    # 		for bin in range(1, nbins+1):
-    # 			try:
-    # 				rho_f, rho_s = process(r, snap, hs, bin)
-    # 				f.write('%d,%d,%f,%f\n'%(snap, bin, rho_f, rho_s))
-    # 			except:
-    # 				logging.info('Failed snapshot %d, bin %d'%(snap, bin))
+    #     f.write('snap,bin,rho_f,rho_s\n')
+    #     for snap in [51,61,78,93,122]:
+    #       hs, _, bins = mf(r, snap, nbins)
+    #       for bin in range(1, nbins+1):
+    #         try:
+    #           rho_f, rho_s = process(r, snap, hs, bin)
+    #           f.write('%d,%d,%f,%f\n'%(snap, bin, rho_f, rho_s))
+    #         except:
+    #           logging.info('Failed snapshot %d, bin %d'%(snap, bin))
 
     # ds = np.genfromtxt('./output/einasto.csv',\
-    # 		delimiter=',', skip_header=1,\
-    # 		dtype=np.dtype([\
-    # 			('snap',int),\
-    # 			('bin',int),\
-    # 			('rho_f',float),\
-    # 			('rho_s',float)\
+    #       delimiter=',', skip_header=1,\
+    #       dtype=np.dtype([\
+    #         ('snap',int),\
+    #         ('bin',int),\
+    #         ('rho_f',float),\
+    #         ('rho_s',float)\
     # ]))
 
     # markers = [['o', None], ['.', None], ['^', None], ['x', None], ['*', None]]
     # for i,snap in enumerate(snaps):
-    # 		for d in ds[ds['snap'] == snap]:
-    # 			plt.scatter(d['rho_f'], d['rho_s'],\
-    # 				color='C%d'%d['bin'], marker=markers[i][0])
-    # 			markers[i][1] = plt.Line2D([], [], label='snap %d'%snap,\
-    # 				color='k', marker=markers[i][0], linestyle='')
+    #       for d in ds[ds['snap'] == snap]:
+    #         plt.scatter(d['rho_f'], d['rho_s'],\
+    #           color='C%d'%d['bin'], marker=markers[i][0])
+    #         markers[i][1] = plt.Line2D([], [], label='snap %d'%snap,\
+    #           color='k', marker=markers[i][0], linestyle='')
 
     # plt.xlabel(r'$\log_{10}(\rho_{crit}(z_{form})/\rho_{crit}(z_0))$')
     # plt.ylabel(r'$\log_{10}(\langle\rho_{s}\rangle/\rho_{crit}(z_0))$')

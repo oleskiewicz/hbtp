@@ -17,24 +17,24 @@ from scipy.optimize import curve_fit
 def mf(reader, snap, nbins):
     """Selects, bins & bins FoF haloes into log-spaced bins
     """
-    hs = reader.LoadHostHalos(snap)
-    # hs = hs[(hs['M200Crit'] >= 20) & (hs['CenterOffset'] >= 0.1)]
-    hs = hs[hs["M200Crit"] >= 20]
-    hs["M200Crit"] = 1e10 * hs["M200Crit"]
+    haloes = reader.LoadHostHalos(snap)
+    # haloes = haloes[(haloes['M200Crit'] >= 20) & (haloes['CenterOffset'] >= 0.1)]
+    haloes = haloes[haloes["M200Crit"] >= 20]
+    haloes["M200Crit"] = 1e10 * haloes["M200Crit"]
 
-    counts, bin_edges = np.histogram(np.log10(hs["M200Crit"]), nbins)
-    hs = np.lib.recfunctions.append_fields(
-        hs,
+    counts, bin_edges = np.histogram(np.log10(haloes["M200Crit"]), nbins)
+    haloes = np.lib.recfunctions.append_fields(
+        haloes,
         "bin",
-        np.digitize(np.log10(hs["M200Crit"]), bin_edges),
+        np.digitize(np.log10(haloes["M200Crit"]), bin_edges),
         usemask=False,
     )
     bins = 0.5 * (bin_edges[1:] + bin_edges[:-1])
 
-    return hs, bins, counts
+    return haloes, bins, counts
 
 
-def smf(reader, snap, ax=None):
+def smf(reader, snap):
     """Selects, bins & bins subhaloes into 20 log-spaced bins
     """
     subhaloes = reader.LoadSubhalos(snap)
@@ -53,13 +53,10 @@ def smf(reader, snap, ax=None):
     )
     bins = 0.5 * (bin_edges[1:] + bin_edges[:-1])
 
-    if ax is not None:
-        ax.plot(bins, np.log10(counts), marker=".")
-
     return subhaloes, counts, bins
 
 
-def prof(haloes):
+def prof(haloes, ax=None):
     """Reads, fits & plots binned particle profiles for FoF haloes
     """
     ps = np.array(haloes["Profile"], dtype=np.float)
@@ -78,6 +75,37 @@ def prof(haloes):
         f, x[idx], np.log10(np.median(np.cumsum(ps, axis=1), axis=0))[idx]
     )[0][0]
 
+    if ax is not None:
+        for _p in ps:
+            ax.plot(x[1:], np.log10(_p[1:]), color="silver", zorder=0)
+
+        ax.plot(
+            x[idx],
+            np.log10(nfw.m_diff(np.power(10., x), c)[idx]),
+            color="C0",
+            linestyle="-",
+            linewidth=4,
+            zorder=2,
+            label="stacked fit",
+        )
+        ax.plot(
+            x[idx],
+            np.log10(p[idx]),
+            color="C1",
+            marker="o",
+            zorder=2,
+            label="median profile",
+        )
+        ax.axvline(
+            np.log10(1.0 / c), color="C0", linestyle="--", label="$R_{-2}$"
+        )
+
+        ax.set_xlim([-2.2, 0.2])
+        ax.set_ylim([-3.5, -0.5])
+        ax.set_xlabel(r"$\log_{10}(R / R_{200 crit})$")
+        ax.set_ylabel(r"$\log_{10}(M(R) / M_{200 crit})$")
+        ax.legend()
+
     return (
         c,
         idx,
@@ -88,7 +116,7 @@ def prof(haloes):
     )
 
 
-def cmh(haloes, grav, snap, f=0.02, F=0.1):
+def cmh(haloes, grav, snap, f=0.02, F=0.1, ax=None):
     """Reads, calculates formation time of & plots CMHs of FoF haloes
     """
     ms = np.array(
@@ -115,36 +143,66 @@ def cmh(haloes, grav, snap, f=0.02, F=0.1):
         np.log10(m_f / y1)
     ) + np.log10(x1)
 
+    if ax is not None:
+        for _m in ms:
+            ax.plot(np.log10(rho), np.log10(_m), color="silver")
+
+        ax.plot(
+            np.log10(rho),
+            np.log10(m),
+            color="C1",
+            marker="o",
+            label="median mass history",
+        )
+        ax.axvline(
+            rho_f, color="C0", linestyle="--", label="formation threshold"
+        )
+
+        ax.set_xlim([0.2, 2.2])
+        ax.set_ylim([-2.0, 0.5])
+        ax.set_xlabel(r"$\log_{10}(rho_crit(z) / rho_{crit}(z_0)$")
+        ax.set_ylabel(r"$\log_{10}(M_{200 crit}(z) / M_{200 crit}(z_0)$")
+        ax.legend()
+
     return np.log10(rho), np.log10(m), rho_f, np.log10(m_f), np.log10(ms)
 
 
-def process(hs, grav, snap, f, bin):
+def process(haloes, grav, snap, f, bin):
     zs = read.snaps()
     z0 = zs[zs["Snapshot"] == snap][0]["Redshift"]
 
-    hs = hs[hs["bin"] == bin]
+    # haloes = haloes[haloes["bin"] == bin]
 
-    logging.info("Snapshot %d, bin %d, %d haloes" % (snap, bin, len(hs)))
+    logging.info("Snapshot %d, bin %d, %d haloes" % (snap, bin, len(haloes)))
+
+    fig, axes = plt.subplots(nrows=1, ncols=2, figsize=[11, 5])
+    # ax.set_title("%s, $z_0=0.0$, %.2f < $log_{10}(M_{200})$ < %.2f" % (grav, bin_edges[bin], bin_edges[bin+1]))
+    # ax.set_title("%s, $z_0=0.0$, F=%.2f%%, %.2f < $log_{10}(M_{200})$ < %.2f" % (grav, 100.0*F(prof, c), bin_edges[bin], bin_edges[bin+1]))
 
     rho_f = np.nan
     rho_s = np.nan
 
     try:
-        c, _, _, _, _, _ = prof(hs)
+        c, _, _, _, _, _ = prof(haloes, axes[0])
         rho_s = np.log10(nfw.rho_enc(1.0 / c, c))
         F = nfw.m(1.0 / c, c)
         try:
-            _, _, rho_f, _, _ = cmh(hs, grav, snap, f, F)
+            _, _, rho_f, _, _ = cmh(haloes, grav, snap, f, F, axes[1])
         except:
             logging.error(
                 "Formation time (run: %s, snapshot: %d, f: %.2f, bin: %d, haloes: %d)"
-                % (grav, snap, f, bin, len(hs))
+                % (grav, snap, f, bin, len(haloes))
             )
     except:
         logging.error(
             "Density profile (run: %s, snapshot: %d, f: %.2f, bin: %d, haloes: %d)"
-            % (grav, snap, f, bin, len(hs))
+            % (grav, snap, f, bin, len(haloes))
         )
+
+    fig.tight_layout()
+    fig.savefig(
+        "./plots/fig_%s.%03d.%03d.%02d.pdf" % (grav, snap, int(100 * f), bin)
+    )
 
     return rho_f, rho_s
 
@@ -152,11 +210,11 @@ def process(hs, grav, snap, f, bin):
 def concentration_mass(reader, grav, snap, f, nbins):
     """Plots concentration mass relation at a given snapshot
     """
-    hs, ms, _ = mf(reader, snap, nbins)
+    haloes, ms, _ = mf(reader, snap, nbins)
     cs = np.log10(
         [
-            prof(hs[hs["bin"] == i + 1])[0]
-            if len(hs[hs["bin"] == i + 1]) > 0
+            prof(haloes[haloes["bin"] == i + 1])[0]
+            if len(haloes[haloes["bin"] == i + 1]) > 0
             else np.nan
             for i, m in enumerate(ms)
         ]
@@ -169,30 +227,24 @@ if __name__ == "__main__":
 
     # bin = 10
     # snap = 122
-    # grav = "GR_b64n512"
+    # grav = "fr6_b64n512"
     # f = 0.02
 
-    # plt.plot(
-    #     *concentration_mass(
-    #         HBTReader("./data/%s/subcat" % "GR_b64n512"),
-    #         "GR_b64n512", snap, f, nbins),
-    #     c='C0')
-    # plt.plot(
-    #     *concentration_mass(
-    #         HBTReader("./data/%s/subcat" % "fr6_b64n512"),
-    #          "fr6_b64n512", snap, f, nbins),
-    #     c='C1')
-    # plt.show()
+    # reader = HBTReader("./data/%s/subcat" % grav)
+    # haloes, _, _ = mf(reader, snap, nbins)
+    # x, y = process(haloes[haloes["bin"] == bin], grav, snap, f, bin)
 
     sys.stdout.write("prof,grav,snap,f,bin,counts,rho_f,rho_s\n")
     for grav in ["GR_b64n512", "fr6_b64n512"]:
         reader = HBTReader("./data/%s/subcat" % grav)
         for snap in [122, 93, 78, 61, 51]:
             for f in [0.01, 0.02, 0.1, 0.5]:
-                hs, _, counts = mf(reader, snap, nbins)
+                haloes, _, counts = mf(reader, snap, nbins)
                 for i, count in enumerate(counts):
-                    rho_f, rho_s = process(hs, grav, snap, f, i + 1)
-                    print(
-                        "%s,%s,%d,%.2f,%d,%d,%f,%f"
+                    rho_f, rho_s = process(
+                        haloes[haloes["bin"] == i + 1], grav, snap, f, i + 1
+                    )
+                    sys.stdout.write(
+                        "%s,%s,%d,%.2f,%d,%d,%f,%f\n"
                         % ("nfw", grav, snap, f, i + 1, count, rho_f, rho_s)
                     )
