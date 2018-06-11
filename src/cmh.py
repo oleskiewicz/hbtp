@@ -5,7 +5,7 @@ import sys
 import defopt
 import numpy as np
 import pandas as pd
-from hbtp.HBTReader import HBTReader
+from hbtp import HBTReader
 from numpy.lib.recfunctions import append_fields
 from util import pmap
 

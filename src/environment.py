@@ -6,7 +6,7 @@ import defopt
 import numpy as np
 import pandas as pd
 import yaml
-from hbtp.HBTReader import HBTReader
+from hbtp import HBTReader
 from src import read
 from src.util import pmap
 

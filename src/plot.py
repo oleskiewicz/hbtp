@@ -5,7 +5,7 @@ import sys
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from hbtp.HBTReader import HBTReader
+from hbtp import HBTReader
 from src import cosmology, einasto, nfw, read
 
 

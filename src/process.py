@@ -5,7 +5,7 @@ import sys
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from hbtp.HBTReader import HBTReader
+from hbtp import HBTReader
 from scipy.optimize import curve_fit
 from src import cosmology, nfw, read
 
