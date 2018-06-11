@@ -9,6 +9,7 @@ PROF?=nfw
 ids: $(OUT)/ids.$(GRAV).$(SNAP).csv
 prof: $(OUT)/prof.$(GRAV).$(SNAP).csv
 cmh: ids $(OUT)/cmh.f$(NFW_f).$(GRAV).$(SNAP).csv
+env: ids $(OUT)/env.$(GRAV).$(SNAP).csv
 
 $(OUT)/ids.$(GRAV).$(SNAP).csv: $(SRC)/filter.py
 	$< $(GRAV) $(SNAP) > $@
@@ -21,6 +22,11 @@ $(OUT)/cmh.f$(NFW_f).$(GRAV).$(SNAP).csv: $(SRC)/cmh.py $(OUT)/ids.$(GRAV).$(SNA
 		$(GRAV) $(SNAP) \
 		-H $(shell cat $(OUT)/ids.$(GRAV).$(SNAP).csv | paste -s -d' ') \
 		-f $(shell echo "$(NFW_f) / 100" | bc -l) \
+		> $@
+
+$(OUT)/env.$(GRAV).$(SNAP).csv: $(SRC)/environment.py $(OUT)/ids.$(GRAV).$(SNAP).csv
+	$(SRC)/environment.py \
+		$(GRAV) $(SNAP) \
 		> $@
 
 $(OUT)/result.$(PROF).csv: $(SRC)/process.py

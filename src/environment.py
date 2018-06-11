@@ -73,8 +73,10 @@ def main(grav, snap):
     logger.info("%d haloes at snapshot %d" % (len(ids), snap))
 
     pd.DataFrame(
-        reader.ConditionalNearestNeighbour(snap, [ids]), index=ids
-    ).replace(np.nan, 1.0).to_csv(sys.stdout)
+        {"D_Nf": reader.ConditionalNearestNeighbour(snap, [ids])}, index=ids
+    ).replace(np.nan, 1.0).to_csv(
+        sys.stdout, index=True, index_label="HostHaloId"
+    )
 
 
 if __name__ == "__main__":

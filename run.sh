@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 #BSUB -P durham
 #BSUB -q cosma
 #BSUB -n 8
