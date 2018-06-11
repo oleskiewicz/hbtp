@@ -10,7 +10,14 @@ import yaml
 from HBTReader import HBTReader
 from util import pmap
 
-logging.config.dictConfig(yaml.load(open("./logging.yaml", "r")))
+logging.config.dictConfig(
+    yaml.load(
+        open(
+            os.path.join(os.path.dirname(__file__) + "/../", "./logging.yaml"),
+            "r",
+        )
+    )
+)
 logger = logging.getLogger(__name__)
 
 
