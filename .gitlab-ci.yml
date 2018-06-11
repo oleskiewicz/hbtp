@@ -1,0 +1,13 @@
+image: python:alpine
+
+pages:
+  script:
+    - pip install sphinx sphinxcontrib-napoleon sphinxcontrib-websupport
+    - apk --no-cache add make
+    - cd docs; make
+    - mv docs/build/html public/
+  artifacts:
+    paths:
+      - public
+  only:
+    - master
