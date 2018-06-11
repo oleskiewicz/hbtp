@@ -3,6 +3,7 @@ h5py
 matplotlib
 numpy
 pandas
+pyyaml
 scipy
 sphinx
 sphinxcontrib-napoleon
