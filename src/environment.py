@@ -5,10 +5,10 @@ import sys
 import defopt
 import numpy as np
 import pandas as pd
-import read
 import yaml
-from HBTReader import HBTReader
-from util import pmap
+from hbtp.HBTReader import HBTReader
+from src import read
+from src.util import pmap
 
 logging.config.dictConfig(
     yaml.load(

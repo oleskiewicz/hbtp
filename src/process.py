@@ -2,16 +2,12 @@
 import logging
 import sys
 
-import cosmology
 import matplotlib.pyplot as plt
-import nfw
 import numpy as np
 import pandas as pd
-import read
-from HBTReader import HBTReader
+from hbtp.HBTReader import HBTReader
 from scipy.optimize import curve_fit
-
-# from src import einasto
+from src import cosmology, nfw, read
 
 
 def mf(reader, snap, nbins):

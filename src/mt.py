@@ -4,7 +4,7 @@ import sys
 
 import defopt
 import numpy as np
-from HBTReader import HBTReader
+from hbtp.HBTReader import HBTReader
 
 
 def main(grav, snap, host):

@@ -1,7 +1,7 @@
-:mod:`src.HBTReader`
-====================
+:mod:`hbtp.HBTReader`
+=====================
 
-.. automodule:: src.HBTReader
+.. automodule:: hbtp.HBTReader
   :members:
   :undoc-members:
   :show-inheritance:

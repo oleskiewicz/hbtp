@@ -5,8 +5,8 @@ import sys
 import defopt
 import numpy as np
 import pandas as pd
-import read
-from HBTReader import HBTReader
+from hbtp.HBTReader import HBTReader
+from src import read
 
 
 class HBTProfileReader(HBTReader):
