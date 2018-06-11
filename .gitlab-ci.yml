@@ -4,10 +4,9 @@ pages:
   script:
     - pip install sphinx sphinxcontrib-napoleon sphinxcontrib-websupport
     - apk --no-cache add make
-    - cd docs; make
-    - mv docs/build/html public/
+    - cd ./docs; make
   artifacts:
     paths:
-      - public
+      - docs/build/html
   only:
     - master
