@@ -163,42 +163,41 @@ def cmh(haloes, grav, snap, f=0.02, F=0.1, ax=None):
     return np.log10(rho), np.log10(m), rho_f, np.log10(m_f), np.log10(ms)
 
 
-def process(haloes, grav, snap, f, bin):
+def process(haloes, grav, snap, f, rs_f, bin, plot=False):
     zs = read.snaps()
     z0 = zs[zs["Snapshot"] == snap][0]["Redshift"]
 
-    # haloes = haloes[haloes["bin"] == bin]
+    logging.debug("Snapshot %d, bin %d, %d haloes" % (snap, bin, len(haloes)))
 
-    logging.info("Snapshot %d, bin %d, %d haloes" % (snap, bin, len(haloes)))
+    if plot:
+        fig, axes = plt.subplots(nrows=1, ncols=2, figsize=[11, 5])
 
-    fig, axes = plt.subplots(nrows=1, ncols=2, figsize=[11, 5])
-    # ax.set_title("%s, $z_0=0.0$, %.2f < $log_{10}(M_{200})$ < %.2f" % (grav, bin_edges[bin], bin_edges[bin+1]))
-    # ax.set_title("%s, $z_0=0.0$, F=%.2f%%, %.2f < $log_{10}(M_{200})$ < %.2f" % (grav, 100.0*F(prof, c), bin_edges[bin], bin_edges[bin+1]))
-
-    rho_f = np.nan
     rho_s = np.nan
+    rho_f = np.nan
 
     try:
-        c, _, _, _, _, _ = prof(haloes, axes[0])
-        rho_s = np.log10(nfw.rho_enc(1.0 / c, c))
-        F = nfw.m(1.0 / c, c)
+        c, _, _, _, _, _ = prof(haloes)
+        rho_s = np.log10(nfw.rho_enc(rs_f / c, c))
+        F = nfw.m(rs_f / c, c)
         try:
-            _, _, rho_f, _, _ = cmh(haloes, grav, snap, f, F, axes[1])
-        except:
+            _, _, rho_f, _, _ = cmh(haloes, grav, snap, f, F)
+        except Exception as e:
             logging.error(
-                "Formation time (run: %s, snapshot: %d, f: %.2f, bin: %d, haloes: %d)"
-                % (grav, snap, f, bin, len(haloes))
+                "rho_f (run: %s, snapshot: %d, f: %.2f, bin: %d, haloes: %d): %s"
+                % (grav, snap, f, bin, len(haloes), e)
             )
-    except:
+    except Exception as e:
         logging.error(
-            "Density profile (run: %s, snapshot: %d, f: %.2f, bin: %d, haloes: %d)"
-            % (grav, snap, f, bin, len(haloes))
+            "rho_s (run: %s, snapshot: %d, f: %.2f, bin: %d, haloes: %d): %s"
+            % (grav, snap, f, bin, len(haloes), e)
         )
 
-    fig.tight_layout()
-    fig.savefig(
-        "./plots/fig_%s.%03d.%03d.%02d.pdf" % (grav, snap, int(100 * f), bin)
-    )
+    if plot:
+        fig.tight_layout()
+        fig.savefig(
+            "./plots/fig_%s.%03d.%03d.f%02d.rsf%02d.pdf"
+            % (grav, snap, int(100 * f), bin, int(10 * rs_f))
+        )
 
     return rho_f, rho_s
 
@@ -223,24 +222,40 @@ if __name__ == "__main__":
 
     # bin = 10
     # snap = 122
-    # grav = "fr6_b64n512"
+    # grav = "GR_b64n512"
     # f = 0.02
-
+    # rs_f = 1.0
     # reader = HBTReader("./data/%s/subcat" % grav)
     # haloes, _, _ = mf(reader, snap, nbins)
-    # x, y = process(haloes[haloes["bin"] == bin], grav, snap, f, bin)
+    # x, y = process(haloes[haloes["bin"] == bin], grav, snap, f, rs_f, bin)
 
-    sys.stdout.write("prof,grav,snap,f,bin,counts,rho_f,rho_s\n")
+    sys.stdout.write("prof,rs_f,grav,snap,f,bin,counts,rho_f,rho_s\n")
     for grav in ["GR_b64n512", "fr6_b64n512"]:
         reader = HBTReader("./data/%s/subcat" % grav)
-        for snap in [122, 93, 78, 61, 51]:
-            for f in [0.01, 0.02, 0.1, 0.5]:
-                haloes, _, counts = mf(reader, snap, nbins)
-                for i, count in enumerate(counts):
-                    rho_f, rho_s = process(
-                        haloes[haloes["bin"] == i + 1], grav, snap, f, i + 1
-                    )
-                    sys.stdout.write(
-                        "%s,%s,%d,%.2f,%d,%d,%f,%f\n"
-                        % ("nfw", grav, snap, f, i + 1, count, rho_f, rho_s)
-                    )
+        for rs_f in [0.3, 1.0, 2.0]:
+            for snap in [122, 93, 78, 61, 51]:
+                for f in [0.01, 0.02, 0.1]:
+                    haloes, _, counts = mf(reader, snap, nbins)
+                    for i, count in enumerate(counts):
+                        rho_f, rho_s = process(
+                            haloes[haloes["bin"] == i + 1],
+                            grav,
+                            snap,
+                            f,
+                            rs_f,
+                            i + 1,
+                        )
+                        sys.stdout.write(
+                            "%s,%.2f,%s,%d,%.2f,%d,%d,%f,%f\n"
+                            % (
+                                "nfw",
+                                rs_f,
+                                grav,
+                                snap,
+                                f,
+                                i + 1,
+                                count,
+                                rho_f,
+                                rho_s,
+                            )
+                        )
