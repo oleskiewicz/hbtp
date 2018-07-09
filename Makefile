@@ -11,7 +11,7 @@ prof: $(OUT)/prof.$(GRAV).$(SNAP).csv
 cmh: ids $(OUT)/cmh.f$(NFW_f).$(GRAV).$(SNAP).csv
 env: ids $(OUT)/env.$(GRAV).$(SNAP).csv
 
-$(OUT)/ids.$(GRAV).$(SNAP).csv: $(SRC)/filter.py
+$(OUT)/ids.$(GRAV).$(SNAP).csv: $(SRC)/query.py
 	$< $(GRAV) $(SNAP) > $@
 
 $(OUT)/prof.$(GRAV).$(SNAP).csv: $(SRC)/prof.py
