@@ -1,13 +1,15 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import logging
 import sys
 
 import defopt
 import numpy as np
 import pandas as pd
-from hbtp import HBTReader
 from numpy.lib.recfunctions import append_fields
-from util import pmap
+
+from hbtp import HBTReader
+
+from .util import pmap
 
 logging.getLogger().setLevel(logging.INFO)
 

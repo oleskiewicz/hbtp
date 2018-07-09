@@ -1,12 +1,13 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import logging
 import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from hbtp import HBTReader
 from scipy.optimize import curve_fit
+
+from hbtp import HBTReader
 from src import cosmology, nfw, read
 
 
@@ -228,6 +229,8 @@ if __name__ == "__main__":
     # reader = HBTReader("./data/%s/subcat" % grav)
     # haloes, _, _ = mf(reader, snap, nbins)
     # x, y = process(haloes[haloes["bin"] == bin], grav, snap, f, rs_f, bin)
+
+    # TODO: add filtering: d[np.log10(d['D_Nf']) > threshold]["HostHaloId"].values
 
     sys.stdout.write("prof,rs_f,grav,snap,f,bin,counts,rho_f,rho_s\n")
     for grav in ["GR_b64n512", "fr6_b64n512"]:

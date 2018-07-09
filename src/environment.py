@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import logging
 import sys
 
@@ -6,6 +6,7 @@ import defopt
 import numpy as np
 import pandas as pd
 import yaml
+
 from hbtp import HBTReader
 from src import read
 from src.util import pmap

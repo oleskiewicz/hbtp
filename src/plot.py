@@ -1,10 +1,11 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import logging
 import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+
 from hbtp import HBTReader
 from src import cosmology, einasto, nfw, read
 
