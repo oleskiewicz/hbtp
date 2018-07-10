@@ -1,9 +1,10 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import logging
 import sys
 
 import defopt
 import numpy as np
+
 from hbtp import HBTReader
 
 

@@ -1,11 +1,12 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import logging
 
 import matplotlib.pyplot as plt
 import numpy as np
+from mpl_toolkits.mplot3d import Axes3D
+
 import util
 from hbtp import HBTReader
-from mpl_toolkits.mplot3d import Axes3D
 
 
 def main(grav, snap, host, save=False):
