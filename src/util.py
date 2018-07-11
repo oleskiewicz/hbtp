@@ -104,7 +104,7 @@ def pmap(f, xs, nprocs=mp.cpu_count()):
     q_out = mp.Queue()
 
     proc = [
-        mp.Process(target=fun, args=(f, q_in, q_out)) for _ in xrange(nprocs)
+        mp.Process(target=fun, args=(f, q_in, q_out)) for _ in range(nprocs)
     ]
 
     for p in proc:
@@ -112,8 +112,8 @@ def pmap(f, xs, nprocs=mp.cpu_count()):
         p.start()
 
     sent = [q_in.put((i, x)) for i, x in enumerate(xs)]
-    [q_in.put((None, None)) for _ in xrange(nprocs)]
-    res = [q_out.get() for _ in xrange(len(sent))]
+    [q_in.put((None, None)) for _ in range(nprocs)]
+    res = [q_out.get() for _ in range(len(sent))]
 
     [p.join() for p in proc]
 
