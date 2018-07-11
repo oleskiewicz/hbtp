@@ -8,8 +8,9 @@ PROF?=nfw
 
 ids: $(OUT)/ids.$(GRAV).$(SNAP).csv
 prof: $(OUT)/prof.$(GRAV).$(SNAP).csv
-cmh: ids $(OUT)/cmh.f$(NFW_f).$(GRAV).$(SNAP).csv
-env: ids $(OUT)/env.$(GRAV).$(SNAP).csv
+cmh: $(OUT)/cmh.f$(NFW_f).$(GRAV).$(SNAP).csv
+dnf: $(OUT)/dnf.$(GRAV).$(SNAP).csv
+split: $(OUT)/ids_over.$(GRAV).$(SNAP).csv $(OUT)/ids_under.$(GRAV).$(SNAP).csv
 
 $(OUT)/ids.$(GRAV).$(SNAP).csv: $(SRC)/query.py
 	$< $(GRAV) $(SNAP) > $@
@@ -24,10 +25,13 @@ $(OUT)/cmh.f$(NFW_f).$(GRAV).$(SNAP).csv: $(SRC)/cmh.py $(OUT)/ids.$(GRAV).$(SNA
 		-f $(shell echo "$(NFW_f) / 100" | bc -l) \
 		> $@
 
-$(OUT)/env.$(GRAV).$(SNAP).csv: $(SRC)/environment.py $(OUT)/ids.$(GRAV).$(SNAP).csv
+$(OUT)/dnf.$(GRAV).$(SNAP).csv: $(SRC)/environment.py $(OUT)/ids.$(GRAV).$(SNAP).csv
 	$(SRC)/environment.py \
 		$(GRAV) $(SNAP) \
 		> $@
+
+$(OUT)/ids_over.$(GRAV).$(SNAP).csv $(OUT)/ids_under.$(GRAV).$(SNAP).csv: $(SRC)/split_by_Dnf.py $(OUT)/dnf.$(GRAV).$(SNAP).csv
+	$< $(GRAV) $(SNAP)
 
 $(OUT)/result.$(PROF).csv: $(SRC)/process.py
 	$< > $@

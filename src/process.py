@@ -12,17 +12,10 @@ from src import cosmology, nfw, read
 
 
 def mf(reader, grav, snap, nbins):
-    """Selects, bins & bins FoF haloes into log-spaced bins
+    """Selects, filters & bins FoF haloes into log-spaced bins
     """
     haloes = reader.LoadHostHalos(snap)
-    haloes = haloes[
-        [
-            int(l.strip())
-            for l in open(
-                "./output/ids.%s.%03d.csv" % (grav, snap), "r"
-            ).readlines()
-        ]
-    ]
+    haloes = haloes[read.ids(grav, snap)]
     haloes["M200Crit"] = 1e10 * haloes["M200Crit"]
 
     bins = pd.cut(
@@ -47,7 +40,7 @@ def mf(reader, grav, snap, nbins):
         .loc[np.arange(1, nbins + 1)]
         .values[:, 0]
     )
-    counts[np.isnan(counts)] = 0.0
+    counts[np.isnan(counts)] = -1.0
     counts = counts.astype(int)
 
     return haloes, bins, counts
@@ -243,43 +236,28 @@ def concentration_mass(reader, grav, snap, f, nbins):
 if __name__ == "__main__":
     nbins = 20
 
-    bin = 10
-    snap = 122
-    grav = "GR_b64n512"
-    f = 0.02
-    rs_f = 1.0
-    reader = HBTReader("./data/%s/subcat" % grav)
-    haloes, _, counts = mf(reader, grav, snap, nbins)
-    print(counts)
-    # x, y = process(haloes[haloes["bin"] == bin], grav, snap, f, rs_f, bin)
+    # bin = 10
+    # snap = 122
+    # grav = "GR_b64n512"
+    # f = 0.02
+    # rs_f = 1.0
+    # reader = HBTReader("./data/%s/subcat" % grav)
+    # haloes, _, _ = mf(reader, grav, snap, nbins)
+    # print(process(haloes[haloes["bin"] == bin], grav, snap, f, rs_f, bin))
 
-    # sys.stdout.write("prof,rs_f,grav,snap,f,bin,counts,rho_f,rho_s\n")
-    # for grav in ["GR_b64n512", "fr6_b64n512"]:
-    #     reader = HBTReader("./data/%s/subcat" % grav)
-    #     for rs_f in [0.3, 1.0, 2.0]:
-    #         for snap in [122, 93, 78, 61, 51]:
-    #             for f in [0.01, 0.02, 0.1]:
-    #                 haloes, _, counts = mf(reader, grav, snap, nbins)
-    #                 for i, count in enumerate(counts):
-    #                     rho_f, rho_s = process(
-    #                         haloes[haloes["bin"] == i + 1],
-    #                         grav,
-    #                         snap,
-    #                         f,
-    #                         rs_f,
-    #                         i + 1,
-    #                     )
-    #                     sys.stdout.write(
-    #                         "%s,%.2f,%s,%d,%.2f,%d,%d,%f,%f\n"
-    #                         % (
-    #                             "nfw",
-    #                             rs_f,
-    #                             grav,
-    #                             snap,
-    #                             f,
-    #                             i + 1,
-    #                             count,
-    #                             rho_f,
-    #                             rho_s,
-    #                         )
-    #                     )
+    rs_f, f = 1.0, 0.02
+    sys.stdout.write("prof,rs_f,grav,snap,f,bin,counts,rho_f,rho_s\n")
+    for grav in ["GR_b64n512", "fr6_b64n512"]:
+        reader = HBTReader("./data/%s/subcat" % grav)
+        for snap in [122, 93, 78, 61, 51]:
+            # for rs_f in [0.3, 1.0, 2.0]:
+            #     for f in [0.01, 0.02, 0.1]:
+            haloes, _, counts = mf(reader, grav, snap, nbins)
+            for i, count in enumerate(counts):
+                rho_f, rho_s = process(
+                    haloes[haloes["bin"] == i + 1], grav, snap, f, rs_f, i + 1
+                )
+                sys.stdout.write(
+                    "%s,%.2f,%s,%d,%.2f,%d,%d,%f,%f\n"
+                    % ("nfw", rs_f, grav, snap, f, i + 1, count, rho_f, rho_s)
+                )

@@ -21,7 +21,9 @@ def cmh(grav, snap, f=0.02):
     return d
 
 
-def ids(grav, snap):
-    with open("./output/ids.%s.%03d.csv" % (grav, snap), "r") as f:
-        ids = list(map(lambda id: int(id.strip()), f.readlines()))
-    return ids
+def ids(grav, snap, prefix="ids"):
+    return pd.read_csv(
+        "./output/%s.%s.%03d.csv" % (prefix, grav, snap),
+        header=None,
+        names=["HaloId"],
+    ).values[:, 0]

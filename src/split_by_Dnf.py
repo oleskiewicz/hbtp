@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 
 from hbtp import HBTReader
+from src import read
 
 
 def bin(data, by, nbins):
@@ -19,33 +20,59 @@ def bin(data, by, nbins):
 
 
 def main(grav, snap):
-    """Query & filter halo IDs.
+    """Split halo IDS into 2 groups, below and above percentile range in log10(D_Nf).
 
     :param str grav: Gravity (GR_b64n512 or fr6_b64n512)
     :param int snap: Snapshot number (between 122 and 9)
-    :param bool verbose: print to stdout?
     """
     logging.info("Loading snapshot %d of run %s" % (snap, grav))
 
     reader = HBTReader("./data/%s/subcat/" % grav)
-    haloes = reader.LoadHostHalos(snap)[
-        [
-            int(l.strip())
-            for l in open(
-                "./output/ids.%s.%03d.csv" % (grav, snap), "r"
-            ).readlines()
-        ]
-    ]
-    data = pd.read_csv("./output/env.%s.%03d.csv" % (grav, snap)).set_index(
+    ids = read.ids(grav, snap)
+    haloes = reader.LoadHostHalos(snap)[ids]
+
+    data = pd.read_csv("./output/dnf.%s.%03d.csv" % (grav, snap)).set_index(
         "HostHaloId"
     )
     data["M200Crit"] = np.log10(1e10 * haloes["M200Crit"])
     data["D_Nf"] = np.log10(data["D_Nf"])
-    data["bin"] = bin(data, "M200Crit", 10)
-    dnf_quantiles = data.groupby("bin").quantile([.32, .68])["D_Nf"]
+    data["bin_log10_m200"] = bin(data, "M200Crit", 20)
 
-    sys.stdout.write("bin_log10_m200,percentile,D_Nf\n")
-    dnf_quantiles.to_csv(sys.stdout)
+    dnf_quantiles = data.groupby("bin_log10_m200").quantile([.4, .6])["D_Nf"]
+    dnf_quantiles = dnf_quantiles.iloc[0:-2]  # remove most massive halo
+    dnf_quantiles = dnf_quantiles[~dnf_quantiles.isna()]  # remove nans
+
+    open("./output/ids_under.%s.%03d.csv" % (grav, snap), "w").close()
+    open("./output/ids_over.%s.%03d.csv" % (grav, snap), "w").close()
+    for b in np.unique(data["bin_log10_m200"]):
+        if b in dnf_quantiles.index:
+            under, over = (
+                dnf_quantiles.loc[b].values[0],
+                dnf_quantiles.loc[b].values[-1],
+            )
+            f_under, f_over = (
+                open("./output/ids_under.%s.%03d.csv" % (grav, snap), "a"),
+                open("./output/ids_over.%s.%03d.csv" % (grav, snap), "a"),
+            )
+            np.savetxt(
+                f_under,
+                data[
+                    (data["bin_log10_m200"] == b) & (data["D_Nf"] <= under)
+                ].index.values,
+                fmt="%d",
+            )
+            np.savetxt(
+                f_over,
+                data[
+                    (data["bin_log10_m200"] == b) & (data["D_Nf"] > over)
+                ].index.values,
+                fmt="%d",
+            )
+            f_under.close()
+            f_over.close()
+
+    # sys.stdout.write("bin_log10_m200,percentile,D_Nf\n")
+    # dnf_quantiles.to_csv(sys.stdout)
 
 
 if __name__ == "__main__":

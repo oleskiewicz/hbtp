@@ -5,21 +5,10 @@ import sys
 import defopt
 import numpy as np
 import pandas as pd
-import yaml
 
 from hbtp import HBTReader
 from src import read
 from src.util import pmap
-
-logging.config.dictConfig(
-    yaml.load(
-        open(
-            os.path.join(os.path.dirname(__file__) + "/../", "./logging.yaml"),
-            "r",
-        )
-    )
-)
-logger = logging.getLogger(__name__)
 
 
 class HBTEnvironmentReader(HBTReader):
@@ -29,7 +18,7 @@ class HBTEnvironmentReader(HBTReader):
     def __init__(self, subhalo_path):
         HBTReader.__init__(self, subhalo_path)
 
-    def ConditionalNearestNeighbour(self, isnap=-1, selection=None, N=0, f=1.0):
+    def ConditionalNearestNeighbour(self, isnap, ids, N=0, f=1.0):
         """N-th neighbour more massive than f*M.
 
         .. todo::
@@ -65,8 +54,8 @@ class HBTEnvironmentReader(HBTReader):
 
             return d
 
-        logger.info("Querying haloes %s" % str(selection))
-        haloes = self.LoadHostHalos(isnap, selection)
+        logging.info("Querying %d haloes" % len(ids))
+        haloes = self.LoadHostHalos(isnap)[ids]
         return np.array(pmap(lambda x: __d(x), haloes))
 
 
@@ -78,10 +67,10 @@ def main(grav, snap):
     """
     ids = read.ids(grav, snap)
     reader = HBTEnvironmentReader("./data/%s/subcat" % grav)
-    logger.info("%d haloes at snapshot %d" % (len(ids), snap))
+    logging.info("%d haloes at snapshot %d" % (len(ids), snap))
 
     pd.DataFrame(
-        {"D_Nf": reader.ConditionalNearestNeighbour(snap, [ids])}, index=ids
+        {"D_Nf": reader.ConditionalNearestNeighbour(snap, ids)}, index=ids
     ).replace(np.nan, 1.0).to_csv(
         sys.stdout, index=True, index_label="HostHaloId"
     )
