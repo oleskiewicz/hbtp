@@ -38,7 +38,7 @@ def main(grav, snap):
     data["D_Nf"] = np.log10(data["D_Nf"])
     data["bin_log10_m200"] = bin(data, "M200Crit", 20)
 
-    dnf_quantiles = data.groupby("bin_log10_m200").quantile([.4, .6])["D_Nf"]
+    dnf_quantiles = data.groupby("bin_log10_m200").quantile([.25, .75])["D_Nf"]
     dnf_quantiles = dnf_quantiles.iloc[0:-2]  # remove most massive halo
     dnf_quantiles = dnf_quantiles[~dnf_quantiles.isna()]  # remove nans
 

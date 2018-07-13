@@ -11,7 +11,7 @@ from hbtp import HBTReader
 
 from .util import pmap
 
-logging.getLogger().setLevel(logging.INFO)
+logging.basicConfig(level=logging.INFO)
 
 
 class HBTHistoryReader(HBTReader):

@@ -10,6 +10,8 @@ from scipy.optimize import curve_fit
 from hbtp import HBTReader
 from src import cosmology, nfw, read
 
+logging.basicConfig(level=logging.INFO)
+
 
 def mf(reader, grav, snap, nbins):
     """Selects, filters & bins FoF haloes into log-spaced bins
@@ -17,6 +19,7 @@ def mf(reader, grav, snap, nbins):
     haloes = reader.LoadHostHalos(snap)
     haloes = haloes[read.ids(grav, snap)]
     haloes["M200Crit"] = 1e10 * haloes["M200Crit"]
+    logging.info("Found %d haloes" % len(haloes))
 
     bins = pd.cut(
         np.log10(haloes["M200Crit"]),
