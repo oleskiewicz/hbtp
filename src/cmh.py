@@ -21,6 +21,25 @@ class HBTHistoryReader(HBTReader):
     def __init__(self, subhalo_path):
         HBTReader.__init__(self, subhalo_path)
 
+    def GetProgenitorHaloesRecursive(self, HostHaloId, isnap=-1, maxsnap=None):
+
+        progs = set()
+
+        def rec(s, i):
+            if maxsnap is not None:
+                if s < maxsnap:
+                    return
+            _progs = set(self.GetProgenitorHaloes(i, s))
+            if len(_progs) == 0:
+                return
+            for p in _progs:
+                progs.add((s - 1, p))
+                rec(s - 1, p)
+
+        rec(isnap, HostHaloId)
+
+        return list(progs)
+
     def GetCollapsedMassHistory(self, HostHaloId, isnap=-1, f=0.02):
         """Calculates a CMH, starting at a FOF group.
 
