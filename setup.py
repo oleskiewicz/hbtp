@@ -12,7 +12,10 @@ setup(
     author="Piotr Oleskiewicz",
     author_email="piotr.oleskiewicz@durham.ac.uk",
     description=(
-        "A set of tools for reading and analysing halo catalogues in HBTplus format"
+        """
+        A set of tools for reading and analysing halo catalogues in HBTplus
+        format"
+    """
     ),
     long_description=long_description,
     long_description_content_type="text/rst",

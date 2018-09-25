@@ -3,7 +3,6 @@ import logging
 import sys
 
 import defopt
-import numpy as np
 
 from hbtp import HBTReader
 

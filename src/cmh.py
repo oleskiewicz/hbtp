@@ -58,7 +58,7 @@ class HBTHistoryReader(HBTReader):
         trackIds = self.GetSubsOfHost(HostHaloId, isnap)["TrackId"]
 
         logging.info(
-            "Calculating CMH for halo %d of mass %.2f with %d track(s) at snapshot %d"
+            "CMH for halo [%d] (mass = %.2f, %d tracks, snapshot = %d)"
             % (HostHaloId, m0, len(trackIds), isnap)
         )
 

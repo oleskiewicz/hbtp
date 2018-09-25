@@ -47,7 +47,8 @@ def count_grouped(d):
     dif = np.concatenate(([1], np.diff(d)))
     idx = np.concatenate((np.where(dif)[0], [d.shape[0]]))
     grouped = np.empty(
-        len(idx) - 1, dtype=np.dtype([("value", np.int32), ("count", np.int32)])
+        len(idx) - 1,
+        dtype=np.dtype([("value", np.int32), ("count", np.int32)]),
     )
     grouped["value"] = d[idx[:-1]]
     grouped["count"] = np.diff(idx)

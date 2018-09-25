@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import logging
-import sys
 
 import defopt
 import numpy as np
@@ -20,7 +19,8 @@ def bin(data, by, nbins):
 
 
 def main(grav, snap):
-    """Split halo IDS into 2 groups, below and above percentile range in log10(D_Nf).
+    """Split halo ids into 2 groups, below and above percentile range in
+    log10(D_Nf).
 
     :param str grav: Gravity (GR_b64n512 or fr6_b64n512)
     :param int snap: Snapshot number (between 122 and 9)

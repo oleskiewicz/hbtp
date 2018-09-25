@@ -4,10 +4,10 @@ import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 
 from hbtp import HBTReader
-from src import cosmology, einasto, nfw, read
+
+from . import nfw
 
 
 def mf(ax, bins, counts, bin=0, **kwargs):
@@ -69,21 +69,20 @@ def cmh(ax, x, y_med, x_fit, y_fit, ys=None):
 
 
 def process(snap, hs, bin):
-    zs = read.snaps()
-    z0 = zs[zs["Snapshot"] == snap][0]["Redshift"]
+    # zs = read.snaps()
+    # z0 = zs[zs["Snapshot"] == snap][0]["Redshift"]
 
     hs = hs[hs["bin"] == bin]
 
     logging.info("Snapshot %d, bin %d, %d haloes" % (snap, bin, len(hs)))
 
     c = -1.0
-    rho_f = -1.0
     try:
         c = prof(hs)
-        rho_s = np.log10(nfw.rho_enc(1.0 / c, c))
+        _ = np.log10(nfw.rho_enc(1.0 / c, c))
         F = nfw.m_enc(1.0 / c, c)
         try:
-            rho_f = cmh(hs, snap, F)
+            _ = cmh(hs, snap, F)
         except:
             logging.error("Unable to calculate formation time")
     except:

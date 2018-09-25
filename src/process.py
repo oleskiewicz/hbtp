@@ -183,8 +183,8 @@ def cmh(haloes, grav, snap, f=0.02, F=0.1, ax=None):
 
 
 def process(haloes, grav, snap, f, rs_f, bin, plot=False):
-    zs = read.snaps()
-    z0 = zs[zs["Snapshot"] == snap][0]["Redshift"]
+    # zs = read.snaps()
+    # z0 = zs[zs["Snapshot"] == snap][0]["Redshift"]
 
     logging.debug("Snapshot %d, bin %d, %d haloes" % (snap, bin, len(haloes)))
 
