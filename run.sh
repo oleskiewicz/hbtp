@@ -1,9 +1,12 @@
-#!/bin/sh
-#BSUB -P durham
-#BSUB -q cosma
-#BSUB -n 8
-#BSUB -J hbtp_cmh
-#BSUB -oo ./log/log_%J.txt
-#BSUB -eo ./log/err_%J.txt
+#!/bin/sh -ex
+
+#SBATCH -n 16
+#SBATCH -t 1440
+#SBATCH -P dp004
+#SBATCH -q cosma
+#SBATCH -j hbtp_cmh
+#SBATCH -o ./log/%j.txt
+#SBATCH -e ./log/%j.txt
+#SBATCH --exclusive
 
 make split
