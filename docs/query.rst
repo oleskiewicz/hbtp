@@ -1,7 +1,7 @@
-:mod:`src.filter`
+:mod:`src.query`
 =================
 
-.. automodule:: src.filter
+.. automodule:: src.query
   :members:
   :undoc-members:
   :show-inheritance:

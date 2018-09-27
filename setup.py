@@ -23,7 +23,7 @@ setup(
     keywords="hbtplus cosmology astrophysics dark_matter halo_finder",
     url="https://gitlab.com/oleskiewicz/hbtp",
     packages=find_packages(exclude=["data", "src", "out", "log", "plots"]),
-    install_requires=["defopt", "h5py", "numpy", "pandas", "pyyaml"],
+    install_requires=["defopt", "h5py", "numpy", "pandas"],
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Topic :: Utilities",

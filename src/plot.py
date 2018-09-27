@@ -5,9 +5,8 @@ import sys
 import matplotlib.pyplot as plt
 import numpy as np
 
+from cosmology import nfw
 from hbtp import HBTReader
-
-from . import nfw
 
 
 def mf(ax, bins, counts, bin=0, **kwargs):

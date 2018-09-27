@@ -7,8 +7,10 @@ import numpy as np
 import pandas as pd
 from scipy.optimize import curve_fit
 
+import cosmology
+from cosmology import nfw
 from hbtp import HBTReader
-from src import cosmology, nfw, read
+from src import read
 
 logging.basicConfig(level=logging.INFO)
 

@@ -8,8 +8,7 @@ import pandas as pd
 from numpy.lib.recfunctions import append_fields
 
 from hbtp import HBTReader
-
-from .util import pmap
+from util import pmap
 
 logging.basicConfig(level=logging.INFO)
 
