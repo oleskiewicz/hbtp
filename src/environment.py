@@ -8,7 +8,6 @@ import pandas as pd
 
 from hbtp import HBTReader
 from src import read
-from util import pmap
 
 
 class HBTEnvironmentReader(HBTReader):

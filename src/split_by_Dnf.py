@@ -34,13 +34,13 @@ def main(grav, snap):
     data = pd.read_csv("./output/dnf.%s.%03d.csv" % (grav, snap)).set_index(
         "HostHaloId"
     )
+
     data["M200Crit"] = np.log10(1e10 * haloes["M200Crit"])
     data["D_Nf"] = np.log10(data["D_Nf"])
+    data = data.replace(np.inf, np.nan).dropna()
     data["bin_log10_m200"] = bin(data, "M200Crit", 20)
 
     dnf_quantiles = data.groupby("bin_log10_m200").quantile([.25, .75])["D_Nf"]
-    dnf_quantiles = dnf_quantiles.iloc[0:-2]  # remove most massive halo
-    dnf_quantiles = dnf_quantiles[~dnf_quantiles.isna()]  # remove nans
 
     open("./output/ids_under.%s.%03d.csv" % (grav, snap), "w").close()
     open("./output/ids_over.%s.%03d.csv" % (grav, snap), "w").close()
@@ -71,7 +71,7 @@ def main(grav, snap):
             f_under.close()
             f_over.close()
 
-    # sys.stdout.write("bin_log10_m200,percentile,D_Nf\n")
+    # print("bin_log10_m200,percentile,D_Nf")
     # dnf_quantiles.to_csv(sys.stdout)
 
 
