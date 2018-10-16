@@ -15,11 +15,11 @@ from src import read
 logging.basicConfig(level=logging.INFO)
 
 
-def mf(reader, grav, snap, nbins):
+def mf(reader, grav, snap, ids, nbins):
     """Selects, filters & bins FoF haloes into log-spaced bins
     """
     haloes = reader.LoadHostHalos(snap)
-    haloes = haloes[read.ids(grav, snap)]
+    haloes = haloes[ids]
     haloes["M200Crit"] = 1e10 * haloes["M200Crit"]
     logging.info("Found %d haloes" % len(haloes))
 
@@ -257,7 +257,8 @@ if __name__ == "__main__":
         for snap in [122, 93, 78, 61, 51]:
             # for rs_f in [0.3, 1.0, 2.0]:
             #     for f in [0.01, 0.02, 0.1]:
-            haloes, _, counts = mf(reader, grav, snap, nbins)
+            ids = read.ids(grav, snap, "ids")
+            haloes, _, counts = mf(reader, grav, snap, ids, nbins)
             for i, count in enumerate(counts):
                 rho_f, rho_s = process(
                     haloes[haloes["bin"] == i + 1], grav, snap, f, rs_f, i + 1
