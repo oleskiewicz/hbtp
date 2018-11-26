@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from os import path
 
-from setuptools import find_packages, setup
+from setuptools import setup
 
 with open(path.join(path.abspath(path.dirname(__file__)), "README.rst")) as f:
     long_description = f.read()
@@ -22,8 +22,13 @@ setup(
     license="GPLv3",
     keywords="hbtplus cosmology astrophysics dark_matter halo_finder",
     url="https://gitlab.com/oleskiewicz/hbtp",
-    packages=find_packages(exclude=["data", "src", "out", "log", "plots"]),
-    install_requires=["defopt", "h5py", "numpy", "pandas"],
+    packages=["hbtp"],
+    install_requires=[
+        l.strip()
+        for l in open(
+            path.join(path.abspath(path.dirname(__file__)), "requirements.txt")
+        ).readlines()
+    ],
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Topic :: Utilities",
