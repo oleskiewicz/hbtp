@@ -5,7 +5,7 @@ import sys
 import matplotlib.pyplot as plt
 import numpy as np
 
-from cosmology import nfw
+import cosmology
 from hbtp import HBTReader
 
 
@@ -78,8 +78,8 @@ def process(snap, hs, bin):
     c = -1.0
     try:
         c = prof(hs)
-        _ = np.log10(nfw.rho_enc(1.0 / c, c))
-        F = nfw.m_enc(1.0 / c, c)
+        _ = np.log10(cosmology.nfw.rho_enc(1.0 / c, c))
+        F = cosmology.nfw.m_enc(1.0 / c, c)
         try:
             _ = cmh(hs, snap, F)
         except:

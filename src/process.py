@@ -8,7 +8,6 @@ import pandas as pd
 from scipy.optimize import curve_fit
 
 import cosmology
-from cosmology import nfw
 from hbtp import HBTReader
 from src import read
 
@@ -86,7 +85,7 @@ def prof(haloes, ax=None):
     p = np.median(ps, axis=0)
 
     def f(x, c):
-        return np.log10(nfw.m(np.power(10.0, x), c))
+        return np.log10(cosmology.nfw.m(np.power(10.0, x), c))
 
     c = curve_fit(
         f, x[idx], np.log10(np.median(np.cumsum(ps, axis=1), axis=0))[idx]
@@ -98,7 +97,7 @@ def prof(haloes, ax=None):
 
         ax.plot(
             x[idx],
-            np.log10(nfw.m_diff(np.power(10., x), c)[idx]),
+            np.log10(cosmology.nfw.m_diff(np.power(10.0, x), c)[idx]),
             color="C0",
             linestyle="-",
             linewidth=4,
@@ -128,7 +127,7 @@ def prof(haloes, ax=None):
         idx,
         x,
         np.log10(np.median(np.cumsum(ps, axis=1), axis=0)),
-        np.log10(nfw.m_diff(np.power(10.0, x), c)),
+        np.log10(cosmology.nfw.m_diff(np.power(10.0, x), c)),
         np.log10(p),
     )
 
@@ -198,8 +197,8 @@ def process(haloes, grav, snap, f, rs_f, bin, plot=False):
 
     try:
         c, _, _, _, _, _ = prof(haloes)
-        rho_s = np.log10(nfw.rho_enc(rs_f / c, c))
-        F = nfw.m(rs_f / c, c)
+        rho_s = np.log10(cosmology.nfw.rho_enc(rs_f / c, c))
+        F = cosmology.nfw.m(rs_f / c, c)
         try:
             _, _, rho_f, _, _ = cmh(haloes, grav, snap, f, F)
         except Exception as e:
