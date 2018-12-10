@@ -85,7 +85,13 @@ class HBTHistoryReader(HBTReader):
         )
 
         cmh = np.array(
-            zip(np.full_like(snaps, HostHaloId), snaps, np.zeros_like(snaps)),
+            list(
+                zip(
+                    np.full_like(snaps, HostHaloId),
+                    snaps,
+                    np.zeros_like(snaps),
+                )
+            ),
             dtype=np.dtype(
                 [
                     ("HostHaloId", np.int32),
@@ -96,9 +102,13 @@ class HBTHistoryReader(HBTReader):
         )
         for i, _ in np.ndenumerate(cmh):
             cmh[i]["M200Crit"] = np.sum(
-                filter(
-                    lambda m: m > f * m0,
-                    hosts[hosts["Snapshot"] == cmh[i]["Snapshot"]]["M200Crit"],
+                list(
+                    filter(
+                        lambda m: m > f * m0,
+                        hosts[hosts["Snapshot"] == cmh[i]["Snapshot"]][
+                            "M200Crit"
+                        ],
+                    )
                 )
             )
 
