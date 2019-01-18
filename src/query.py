@@ -21,11 +21,14 @@ def main(grav, snap, verbose=True):
 
     # FILTER 1: small mass haloes
     hosts = hosts[hosts["M200Crit"] >= 20]
-    ids = hosts["HaloId"]
 
-    # # FILTER 2: orphan hosts - redundant
-    # ids = list(filter(lambda id: len(reader.GetSubsOfHost(id,snap)) > 0,
-    #  hosts['HaloId']))
+    # # FILTER 2: CenterOffset
+    # hosts = hosts[hosts["CenterOffset"] >= 0.07]
+
+    # # FILTER 3: orphan hosts - redundant
+    # hosts = [host for host in hosts if len(reader.GetSubsOfHost(host["HaloId"], snap)) > 0]
+
+    ids = hosts["HaloId"]
 
     logging.info("Found %d haloes" % (len(ids)))
 
