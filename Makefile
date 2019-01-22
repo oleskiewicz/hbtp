@@ -4,6 +4,7 @@ OUT:=./output
 GRAV?=GR_b64n512
 SNAP?=051
 NFW_f?=002
+MIN?=1000
 PROF?=nfw
 
 all: ids prof cmh dnf split
@@ -15,7 +16,7 @@ dnf: $(OUT)/dnf.$(GRAV).$(SNAP).csv
 split: $(OUT)/ids_over.$(GRAV).$(SNAP).csv $(OUT)/ids_under.$(GRAV).$(SNAP).csv
 
 $(OUT)/ids.$(GRAV).$(SNAP).csv: $(SRC)/query.py
-	python -m $(shell echo src.$$(basename $< .py)) $(GRAV) $(SNAP) > $@
+	python -m $(shell echo src.$$(basename $< .py)) $(GRAV) $(SNAP) -m $(MIN) > $@
 
 $(OUT)/prof.$(GRAV).$(SNAP).csv: $(SRC)/prof.py
 	python -m $(shell echo src.$$(basename $< .py)) $(GRAV) $(SNAP) > $@
