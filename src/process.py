@@ -11,7 +11,7 @@ import cosmology
 from hbtp import HBTReader
 from src import read
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 
 def mf(reader, grav, snap, ids, nbins):
@@ -48,28 +48,6 @@ def mf(reader, grav, snap, ids, nbins):
     counts = counts.astype(int)
 
     return haloes, bins, counts
-
-
-def smf(reader, snap):
-    """Selects, bins & bins subhaloes into 20 log-spaced bins
-    """
-    subhaloes = reader.LoadSubhalos(snap)
-    subhaloes = subhaloes[
-        (subhaloes["HostHaloId"] != -1)
-        & (subhaloes["BoundM200Crit"] > 0.0)
-        & (subhaloes["Nbound"] >= 20)
-    ]
-
-    counts, bin_edges = np.histogram(np.log10(subhaloes["BoundM200Crit"]), 20)
-    subhaloes = np.lib.recfunctions.append_fields(
-        subhaloes,
-        "bin",
-        np.digitize(np.log10(subhaloes["BoundM200Crit"]), bin_edges),
-        usemask=False,
-    )
-    bins = 0.5 * (bin_edges[1:] + bin_edges[:-1])
-
-    return subhaloes, counts, bins
 
 
 def prof(haloes, ax=None):
