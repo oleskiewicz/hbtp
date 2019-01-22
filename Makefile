@@ -22,7 +22,7 @@ $(OUT)/prof.$(GRAV).$(SNAP).csv: $(SRC)/prof.py
 	python -m $(shell echo src.$$(basename $< .py)) $(GRAV) $(SNAP) > $@
 
 $(OUT)/cmh.f$(NFW_f).$(GRAV).$(SNAP).csv: $(SRC)/cmh.py $(OUT)/ids.$(GRAV).$(SNAP).csv
-	python -m $(shell echo src.$$(basename $< .py)) \
+	/cosma7/data/dp004/dc-oles1/venv/bin/python -m $(shell echo src.$$(basename $< .py)) \
 		$(GRAV) $(SNAP) \
 		-H $(shell cat $(OUT)/ids.$(GRAV).$(SNAP).csv | paste -s -d' ') \
 		-f $(shell echo "$(NFW_f) / 100" | bc -l) \

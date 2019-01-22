@@ -1,12 +1,12 @@
 #!/bin/sh -e
 
-#SBATCH -n 16
-#SBATCH -t 1440
-#SBATCH -P dp004
-#SBATCH -q cosma
-#SBATCH -j hbtp_limin
-#SBATCH -o ./log/%j.txt
-#SBATCH -e ./log/%j.txt
+#SBATCH -n 8
+#SBATCH -t 12:00:00
+#SBATCH -A dp004
+#SBATCH -p cosma6
+#SBATCH -J hbtp_limin
+#SBATCH -o ./log/%A.out
+#SBATCH -e ./log/%A.err
 #SBATCH --exclusive
 
-make all
+make cmh
