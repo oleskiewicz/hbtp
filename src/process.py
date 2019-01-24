@@ -5,6 +5,7 @@ import sys
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from astropy.stats import bayesian_blocks
 from scipy.optimize import curve_fit
 
 import cosmology
@@ -14,44 +15,34 @@ from src import read
 logging.basicConfig(level=logging.DEBUG)
 
 
-def mf(reader, grav, snap, ids, nbins):
-    """Selects, filters & bins FoF haloes into log-spaced bins
+def mf(haloes, edges):
+    """Bins FoF haloes
     """
-    haloes = reader.LoadHostHalos(snap)
-    haloes = haloes[ids]
-    haloes["M200Crit"] = 1e10 * haloes["M200Crit"]
-    logging.info("Found %d haloes" % len(haloes))
 
-    bins = pd.cut(
-        np.log10(haloes["M200Crit"]),
-        np.linspace(
-            np.log10(haloes["M200Crit"]).min(),
-            np.log10(haloes["M200Crit"]).max(),
-            nbins + 1,
-        ),
-        retbins=False,
-        labels=np.arange(1, nbins + 1),
-    )
+    if edges == "bayes":
+        edges = bayesian_blocks(haloes["M200Crit"])
+
+    try:
+        counts, edges = np.histogram(haloes["M200Crit"], edges)
+    except ValueError:
+        logging.exception("Error binning haloes")
+        sys.exit(1)
+
+    centres = 0.5 * (edges[1:] + edges[:-1])
 
     haloes = np.lib.recfunctions.append_fields(
-        haloes, "bin", bins, dtypes=[int], usemask=False
+        haloes,
+        "bin",
+        np.digitize(haloes["M200Crit"], edges, right=True),
+        dtypes=[int],
+        usemask=False,
     )
 
-    counts = (
-        pd.DataFrame(haloes[["HaloId", "bin"]])
-        .groupby("bin")
-        .count()
-        .loc[np.arange(1, nbins + 1)]
-        .values[:, 0]
-    )
-    counts[np.isnan(counts)] = -1.0
-    counts = counts.astype(int)
-
-    return haloes, bins, counts
+    return haloes, centres, counts
 
 
-def prof(haloes, ax=None):
-    """Reads, fits & plots binned particle profiles for FoF haloes
+def prof(haloes):
+    """Fits binned particle profiles for FoF haloes
     """
     ps = np.array(haloes["Profile"], dtype=np.float)
     xmin = 0.5 * np.cbrt((4.0 * np.pi) / (3.0 * np.sum(np.median(ps, axis=0))))
@@ -69,37 +60,6 @@ def prof(haloes, ax=None):
         f, x[idx], np.log10(np.median(np.cumsum(ps, axis=1), axis=0))[idx]
     )[0][0]
 
-    if ax is not None:
-        for _p in ps:
-            ax.plot(x[1:], np.log10(_p[1:]), color="silver", zorder=0)
-
-        ax.plot(
-            x[idx],
-            np.log10(cosmology.nfw.m_diff(np.power(10.0, x), c)[idx]),
-            color="C0",
-            linestyle="-",
-            linewidth=4,
-            zorder=2,
-            label="stacked fit",
-        )
-        ax.plot(
-            x[idx],
-            np.log10(p[idx]),
-            color="C1",
-            marker="o",
-            zorder=2,
-            label="median profile",
-        )
-        ax.axvline(
-            np.log10(1.0 / c), color="C0", linestyle="--", label="$R_{-2}$"
-        )
-
-        ax.set_xlim([-2.2, 0.2])
-        ax.set_ylim([-3.5, -0.5])
-        ax.set_xlabel(r"$\log_{10}(R / R_{200 crit})$")
-        ax.set_ylabel(r"$\log_{10}(M(R) / M_{200 crit})$")
-        ax.legend()
-
     return (
         c,
         idx,
@@ -110,7 +70,7 @@ def prof(haloes, ax=None):
     )
 
 
-def cmh(haloes, grav, snap, f=0.02, F=0.1, ax=None):
+def cmh(haloes, grav, snap, f=0.02, F=0.1):
     """Reads, calculates formation time of & plots CMHs of FoF haloes
     """
     ms = np.array(
@@ -136,27 +96,6 @@ def cmh(haloes, grav, snap, f=0.02, F=0.1, ax=None):
     rho_f = (np.log10(x1 / x2) / np.log10(y1 / y2)) * (
         np.log10(m_f / y1)
     ) + np.log10(x1)
-
-    if ax is not None:
-        for _m in ms:
-            ax.plot(np.log10(rho), np.log10(_m), color="silver")
-
-        ax.plot(
-            np.log10(rho),
-            np.log10(m),
-            color="C1",
-            marker="o",
-            label="median mass history",
-        )
-        ax.axvline(
-            rho_f, color="C0", linestyle="--", label="formation threshold"
-        )
-
-        ax.set_xlim([0.2, 2.2])
-        ax.set_ylim([-2.0, 0.5])
-        ax.set_xlabel(r"$\log_{10}(rho_crit(z) / rho_{crit}(z_0)$")
-        ax.set_ylabel(r"$\log_{10}(M_{200 crit}(z) / M_{200 crit}(z_0)$")
-        ax.legend()
 
     return np.log10(rho), np.log10(m), rho_f, np.log10(m_f), np.log10(ms)
 
@@ -234,8 +173,14 @@ if __name__ == "__main__":
         for snap in [122, 93, 78, 61, 51]:
             # for rs_f in [0.3, 1.0, 2.0]:
             #     for f in [0.01, 0.02, 0.1]:
+
             ids = read.ids(grav, snap, "ids")
-            haloes, _, counts = mf(reader, grav, snap, ids, nbins)
+
+            haloes = reader.LoadHostHalos(snap)
+            haloes = haloes[ids]
+            haloes["M200Crit"] = np.log10(1e10 * haloes["M200Crit"])
+
+            haloes, _, counts = mf(haloes, "bayes")
             for i, count in enumerate(counts):
                 rho_f, rho_s = process(
                     haloes[haloes["bin"] == i + 1], grav, snap, f, rs_f, i + 1
