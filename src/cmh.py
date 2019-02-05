@@ -94,7 +94,7 @@ class HBTHistoryReader(HBTReader):
             ),
             dtype=np.dtype(
                 [
-                    ("HostHaloId", np.int32),
+                    ("HaloId", np.int32),
                     ("Snapshot", np.int32),
                     ("M200Crit", np.float32),
                 ]
@@ -138,12 +138,9 @@ def main(grav, snap, hosts, f=0.02):
             hosts,
         )
     ).pivot_table(
-        values="M200Crit",
-        columns="Snapshot",
-        index="HostHaloId",
-        fill_value=0.0,
+        values="M200Crit", columns="Snapshot", index="HaloId", fill_value=0.0
     ).to_csv(
-        sys.stdout, index=True, index_label="HostHaloId"
+        sys.stdout, index=True, index_label="HaloId"
     )
 
 

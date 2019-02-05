@@ -32,7 +32,7 @@ def main(grav, snap):
     haloes = reader.LoadHostHalos(snap)[ids]
 
     data = pd.read_csv("./output/dnf.%s.%03d.csv" % (grav, snap)).set_index(
-        "HostHaloId"
+        "HaloId"
     )
 
     data["M200Crit"] = np.log10(1e10 * haloes["M200Crit"])
@@ -40,7 +40,9 @@ def main(grav, snap):
     data = data.replace(np.inf, np.nan).dropna()
     data["bin_log10_m200"] = bin(data, "M200Crit", 20)
 
-    dnf_quantiles = data.groupby("bin_log10_m200").quantile([.25, .75])["D_Nf"]
+    dnf_quantiles = data.groupby("bin_log10_m200").quantile([0.25, 0.75])[
+        "D_Nf"
+    ]
 
     open("./output/ids_under.%s.%03d.csv" % (grav, snap), "w").close()
     open("./output/ids_over.%s.%03d.csv" % (grav, snap), "w").close()

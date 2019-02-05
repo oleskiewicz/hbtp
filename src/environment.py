@@ -65,7 +65,7 @@ def main(grav, snap):
 
     pd.DataFrame(
         {"D_Nf": reader.ConditionalNearestNeighbour(snap, ids)}, index=ids
-    ).to_csv(sys.stdout, index=True, index_label="HostHaloId")
+    ).to_csv(sys.stdout, index=True, index_label="HaloId")
 
 
 if __name__ == "__main__":

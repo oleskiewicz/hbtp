@@ -12,7 +12,7 @@ import cosmology
 from hbtp import HBTReader
 from src import read
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 
 def mf(haloes, edges):
@@ -157,20 +157,11 @@ def concentration_mass(reader, grav, snap, f, nbins):
 if __name__ == "__main__":
     nbins = 20
 
-    # bin = 10
-    # snap = 122
-    # grav = "GR_b64n512"
-    # f = 0.02
-    # rs_f = 1.0
-    # reader = HBTReader("./data/%s/subcat" % grav)
-    # haloes, _, _ = mf(reader, grav, snap, nbins)
-    # print(process(haloes[haloes["bin"] == bin], grav, snap, f, rs_f, bin))
-
-    rs_f, f = 1.0, 0.02
     sys.stdout.write("prof,rs_f,grav,snap,f,bin,counts,rho_f,rho_s\n")
     for grav in ["GR_b64n512", "fr6_b64n512"]:
         reader = HBTReader("./data/%s/subcat" % grav)
         for snap in [122, 93, 78, 61, 51]:
+            rs_f, f = 1.0, 0.02
             # for rs_f in [0.3, 1.0, 2.0]:
             #     for f in [0.01, 0.02, 0.1]:
 
@@ -180,7 +171,7 @@ if __name__ == "__main__":
             haloes = haloes[ids]
             haloes["M200Crit"] = np.log10(1e10 * haloes["M200Crit"])
 
-            haloes, _, counts = mf(haloes, "bayes")
+            haloes, _, counts = mf(haloes, nbins)
             for i, count in enumerate(counts):
                 rho_f, rho_s = process(
                     haloes[haloes["bin"] == i + 1], grav, snap, f, rs_f, i + 1
