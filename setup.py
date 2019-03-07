@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
-from os import path
+import os
 
-from setuptools import setup
+import setuptools
 
-with open(path.join(path.abspath(path.dirname(__file__)), "README.rst")) as f:
+with open(
+    os.path.join(os.path.abspath(os.path.dirname(__file__)), "README.rst")
+) as f:
     long_description = f.read()
 
-setup(
+setuptools.setup(
     name="hbtp",
     version="0.1",
     author="Piotr Oleskiewicz",
@@ -21,12 +23,14 @@ setup(
     long_description_content_type="text/rst",
     license="GPLv3",
     keywords="hbtplus cosmology astrophysics dark_matter halo_finder",
-    url="https://gitlab.com/oleskiewicz/hbtp",
+    url="https://github.com/oleskiewicz/hbtp",
     packages=["hbtp"],
     install_requires=[
         l.strip()
         for l in open(
-            path.join(path.abspath(path.dirname(__file__)), "requirements.txt")
+            os.path.join(
+                os.path.abspath(os.path.dirname(__file__)), "requirements.txt"
+            )
         ).readlines()
     ],
     classifiers=[
