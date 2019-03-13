@@ -1,15 +1,15 @@
 HBTplus Python toolbox
 ======================
 
-Python module with helpers for analysis of dark matter haloes from HBTplus halo
-finder.
+Python module with helpers for analysis of dark matter haloes from HBTplus
+halo finder.
 
 Usage
 -----
 
 Makefile is used to document computation of targets for any given values of
-gravity, snapshot, f or density profile parameters.  run.sh and run_all.sh
-demonstrate sample calculation, and submission to a batch queue.
+gravity, snapshot, f or density profile parameters.  ``run.sh`` and
+``submit.sh`` demonstrate sample calculation and submission to a batch queue.
 
 Readers
 -------
@@ -20,7 +20,7 @@ Readers
   calculation; does **not** perform fitting - this is done in
   :func:`src.process.prof()`
 - HBTEnvironmentReader: calculates environmental proxies, as described in
-  Shi+2017 (only $D_{N,f}$ so far)
+  Haas+2012 and Shi+2017 (only $D_{N,f}$)
 
 Modules
 -------
