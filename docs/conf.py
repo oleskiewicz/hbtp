@@ -172,20 +172,20 @@ htmlhelp_basename = "hbtplus"
 
 # -- Options for LaTeX output --------------------------------------------------
 
-latex_engine = "xelatex"
-latex_elements = {"papersize": "a4paper"}
+# latex_engine = "xelatex"
+# latex_elements = {"papersize": "a4paper"}
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
-latex_documents = [
-    (
-        "index",
-        "hbtplus.tex",
-        "HBTplus Python helper Documentation",
-        "Piotr Oleskiewicz",
-        "manual",
-    )
-]
+# latex_documents = [
+#     (
+#         "index",
+#         "hbtplus.tex",
+#         "HBTplus Python helper Documentation",
+#         "Piotr Oleskiewicz",
+#         "manual",
+#     )
+# ]
 
 # The name of an image file (relative to this directory) to place at the top of
 # the title page.
