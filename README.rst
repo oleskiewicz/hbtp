@@ -1,6 +1,9 @@
 HBTplus Python toolbox
 ======================
 
+.. image:: https://zenodo.org/badge/99226018.svg
+   :target: https://zenodo.org/badge/latestdoi/99226018
+
 Python module with helpers for analysis of dark matter haloes from HBTplus
 halo finder.
 
